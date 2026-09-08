@@ -26,7 +26,7 @@ export default function ExamResult() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-slate-400">Memuat...</div>
       </div>
     )
@@ -34,10 +34,10 @@ export default function ExamResult() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
-          <Link to="/exams" className="text-blue-600 text-sm hover:underline">
+          <Link to="/exams" className="text-indigo-600 font-medium text-sm hover:underline">
             Kembali
           </Link>
         </div>
@@ -52,72 +52,88 @@ export default function ExamResult() {
   const durationFormatted = `${Math.floor(durationMin)} menit ${Math.round((durationMin % 1) * 60)} detik`
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-transparent">
       <div className="max-w-3xl mx-auto px-4 py-8">
-        <Link to="/exams" className="text-sm text-slate-500 hover:text-slate-700 inline-block mb-6">
-          ← Kembali ke Daftar Ujian
+        <Link to="/exams" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium inline-flex items-center gap-1.5 mb-8 transition-colors">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          Kembali ke Daftar Ujian
         </Link>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6 text-center">
-          <p className="text-sm text-slate-500 mb-1">Hasil Ujian</p>
-          <div className="text-5xl font-bold text-slate-800 mb-2">
-            {score.toFixed(2)}
-            <span className="text-2xl text-slate-400 font-normal"> / 100</span>
-          </div>
-          <div className="flex items-center justify-center gap-6 text-sm mt-4">
-            <span className="text-green-600 font-medium">✓ {correctCount} benar</span>
-            <span className="text-slate-300">|</span>
-            <span className="text-red-500 font-medium">✗ {wrongCount} salah</span>
-            <span className="text-slate-300">|</span>
-            <span className="text-slate-500">⏱ {durationFormatted}</span>
-          </div>
-          <div className={`mt-4 inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${
-            score >= 70 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-          }`}>
-            {score >= 70 ? 'Lulus' : 'Tidak Lulus'}
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white shadow-xl p-8 mb-10 text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-gradient-to-br from-indigo-200 to-blue-200 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-gradient-to-tr from-emerald-200 to-cyan-200 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+          
+          <div className="relative z-10">
+            <p className="text-sm font-semibold text-indigo-600 mb-2 tracking-wider uppercase">Hasil Ujian</p>
+            <div className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-4 drop-shadow-sm">
+              {score.toFixed(2)}
+              <span className="text-3xl text-slate-400 font-semibold align-baseline"> / 100</span>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm mt-6 bg-white/50 inline-flex px-6 py-3 rounded-2xl border border-slate-100">
+              <span className="text-emerald-600 font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                {correctCount} benar
+              </span>
+              <span className="text-slate-300">|</span>
+              <span className="text-rose-500 font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                {wrongCount} salah
+              </span>
+              <span className="text-slate-300">|</span>
+              <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                ⏱ {durationFormatted}
+              </span>
+            </div>
+            <div className="mt-6">
+              <span className={`inline-block px-5 py-2 rounded-full text-sm font-bold shadow-sm ${
+                score >= 70 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-amber-400 to-orange-400 text-white'
+              }`}>
+                {score >= 70 ? 'Lulus' : 'Tidak Lulus'}
+              </span>
+            </div>
           </div>
         </div>
 
-        <h2 className="font-semibold text-slate-800 text-lg mb-4">Review Jawaban</h2>
+        <h2 className="font-extrabold text-slate-800 text-xl mb-6">Review Jawaban</h2>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {answers.map((ans, index) => (
             <div
               key={ans.answer_id}
-              className={`bg-white rounded-xl border p-5 ${
+              className={`bg-white/80 backdrop-blur-md rounded-2xl border p-6 shadow-sm transition-all hover:shadow-md ${
                 ans.is_correct === 1
-                  ? 'border-green-200'
-                  : 'border-red-200'
+                  ? 'border-emerald-200 shadow-emerald-100/50'
+                  : 'border-rose-200 shadow-rose-100/50'
               }`}
             >
-              <div className="flex items-start gap-3 mb-3">
-                <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${
-                  ans.is_correct === 1 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              <div className="flex items-start gap-4 mb-4">
+                <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-extrabold shrink-0 shadow-sm ${
+                  ans.is_correct === 1 ? 'bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-800' : 'bg-gradient-to-br from-rose-100 to-rose-200 text-rose-800'
                 }`}>
                   {index + 1}
                 </span>
-                <p className="text-slate-800 text-sm leading-relaxed flex-1">{ans.question_body}</p>
+                <p className="text-slate-800 text-sm leading-relaxed flex-1 pt-1.5 font-medium">{ans.question_body}</p>
               </div>
 
-              <div className="ml-10 space-y-1.5 text-sm">
-                <div className={`px-3 py-2 rounded-lg ${
-                  ans.is_correct === 1 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+              <div className="ml-12 space-y-2.5 text-sm">
+                <div className={`px-4 py-3 rounded-xl border ${
+                  ans.is_correct === 1 ? 'bg-emerald-50/80 border-emerald-100 text-emerald-800' : 'bg-rose-50/80 border-rose-100 text-rose-800'
                 }`}>
-                  <span className="font-semibold">Jawabanmu: </span>
+                  <span className="font-bold opacity-80">Jawabanmu: </span>
                   {ans.selected_choice_index >= 0
                     ? `${LABELS[ans.selected_choice_index]}. ${ans.selected_text || '—'}`
                     : '(Tidak dijawab)'}
-                  <span className="ml-2">{ans.is_correct === 1 ? '✓' : '✗'}</span>
+                  <span className="ml-2 font-bold">{ans.is_correct === 1 ? '✓' : '✗'}</span>
                 </div>
                 {ans.is_correct === 0 && (
-                  <div className="px-3 py-2 rounded-lg bg-green-50 text-green-700">
-                    <span className="font-semibold">Kunci Jawaban: </span>
+                  <div className="px-4 py-3 rounded-xl bg-emerald-50/80 border border-emerald-100 text-emerald-800">
+                    <span className="font-bold opacity-80">Kunci Jawaban: </span>
                     {LABELS[ans.correct_choice_index]}. {ans.correct_text || '—'}
                   </div>
                 )}
                 {ans.explanation && (
-                  <div className="mt-2 px-3 py-2 rounded-lg bg-slate-50 text-slate-600 text-xs">
-                    <span className="font-semibold">Pembahasan: </span>
+                  <div className="mt-3 px-4 py-3 rounded-xl bg-indigo-50/50 border border-indigo-100/50 text-indigo-900 text-sm leading-relaxed">
+                    <span className="font-bold text-indigo-700">Pembahasan: </span>
                     {ans.explanation}
                   </div>
                 )}
@@ -126,10 +142,10 @@ export default function ExamResult() {
           ))}
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="mt-10 text-center pb-8">
           <Link
             to={`/take/${attempt.exam_id}`}
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition"
+            className="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold px-8 py-3.5 rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
           >
             Ulangi Ujian
           </Link>

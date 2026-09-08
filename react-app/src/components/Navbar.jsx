@@ -5,9 +5,9 @@ export default function Navbar() {
   const { user, logout } = useAuth()
 
   return (
-    <nav className="bg-white border-b border-slate-200 shadow-sm">
+    <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-slate-200/50 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-slate-800">
+        <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hover:opacity-80 transition">
           Ujian
         </Link>
 
@@ -36,7 +36,7 @@ export default function Navbar() {
             </Link>
             <button
               onClick={logout}
-              className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md transition"
+              className="text-sm bg-slate-100/80 hover:bg-red-50 hover:text-red-600 text-slate-700 px-4 py-1.5 rounded-full transition-all duration-300"
             >
               Keluar
             </button>
@@ -45,13 +45,13 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             <Link
               to="/login"
-              className="text-sm text-slate-600 hover:text-slate-900 transition"
+              className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition"
             >
               Masuk
             </Link>
             <Link
               to="/register"
-              className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md transition"
+              className="text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
             >
               Daftar
             </Link>

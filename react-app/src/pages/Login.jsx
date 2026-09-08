@@ -25,8 +25,8 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-cyan-50 px-4">
+      <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl shadow-indigo-200/50 border border-white p-8 w-full max-w-md transition-all">
         <h1 className="text-2xl font-bold text-slate-800 mb-1">Masuk</h1>
         <p className="text-slate-500 text-sm mb-6">Masuk ke akun kamu untuk membuat soal ujian</p>
 
@@ -45,7 +45,7 @@ export default function Login() {
               type="text"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               placeholder="email@contoh.com"
               required
             />
@@ -59,7 +59,7 @@ export default function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               placeholder="••••••••"
               required
             />
@@ -68,7 +68,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 rounded-lg transition"
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
           >
             {loading ? 'Memproses...' : 'Masuk'}
           </button>
@@ -76,7 +76,7 @@ export default function Login() {
 
         <p className="text-sm text-slate-500 mt-6 text-center">
           Belum punya akun?{' '}
-          <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+          <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">
             Daftar sekarang
           </Link>
         </p>

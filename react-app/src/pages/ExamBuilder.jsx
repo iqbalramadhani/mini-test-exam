@@ -335,7 +335,7 @@ export default function ExamBuilder() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-slate-400">Memuat...</div>
       </div>
     )
@@ -343,10 +343,10 @@ export default function ExamBuilder() {
 
   if (!exam) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-500 mb-4">Ujian tidak ditemukan</p>
-          <Link to="/dashboard" className="text-blue-600 hover:text-blue-700 text-sm">
+          <Link to="/dashboard" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
             ← Kembali ke Dashboard
           </Link>
         </div>
@@ -355,7 +355,7 @@ export default function ExamBuilder() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-transparent">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -384,17 +384,17 @@ export default function ExamBuilder() {
             return (
             <div
               key={q.id || qIndex}
-              className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm"
+              className="bg-white/80 backdrop-blur-lg rounded-2xl border border-white p-6 shadow-sm hover:shadow-md transition-all"
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg uppercase tracking-wider">
                   Soal {qIndex + 1}
                 </span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => saveQuestion(qIndex)}
                     disabled={saving}
-                    className="text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium px-3 py-1.5 rounded-lg transition"
+                    className="text-xs bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-medium px-4 py-2 rounded-xl shadow-md transition-all"
                   >
                     {saving ? 'Menyimpan...' : 'Simpan'}
                   </button>
@@ -407,24 +407,24 @@ export default function ExamBuilder() {
                 </div>
               </div>
 
-              <div className="mb-3">
+              <div className="mb-4">
                 <textarea
                   value={q.body}
                   onChange={(e) => updateQuestion(qIndex, 'body', e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[80px]"
+                  className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y min-h-[80px] transition-all"
                   placeholder="Tulis pertanyaan di sini..."
                 />
               </div>
 
-              <div className="mt-3 space-y-2">
+              <div className="mt-3 space-y-3">
                 {q.choices.map((choice, cIndex) => (
-                  <div key={cIndex} className="flex items-center gap-2">
+                  <div key={cIndex} className="flex items-center gap-3">
                     <button
                       onClick={() => updateQuestion(qIndex, 'correctChoiceIndex', cIndex)}
-                      className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition shrink-0 ${
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all shrink-0 ${
                         q.correctChoiceIndex === cIndex
-                          ? 'border-green-500 bg-green-500 text-white'
-                          : 'border-slate-200 text-slate-400 hover:border-slate-400'
+                          ? 'border-emerald-500 bg-emerald-500 text-white shadow-md shadow-emerald-200'
+                          : 'border-slate-200 text-slate-400 hover:border-indigo-300 hover:text-indigo-500 bg-white'
                       }`}
                       title="Jawaban benar"
                     >
@@ -434,28 +434,28 @@ export default function ExamBuilder() {
                       type="text"
                       value={choice}
                       onChange={(e) => updateChoice(qIndex, cIndex, e.target.value)}
-                      className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="flex-1 bg-white/50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                       placeholder={`Pilihan ${LABELS[cIndex]}`}
                     />
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-slate-400 mt-2">
+              <p className="text-xs text-slate-400 mt-3 pl-11">
                 Klik huruf untuk tandai jawaban yang benar
               </p>
 
               <textarea
                 value={q.explanation || ''}
                 onChange={(e) => updateQuestion(qIndex, 'explanation', e.target.value)}
-                className="w-full mt-3 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[60px]"
-                placeholder="Explanation (optional)..."
+                className="w-full mt-4 bg-white/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y min-h-[60px] transition-all"
+                placeholder="Pembahasan (opsional)..."
               />
 
               <textarea
                 value={q.keterangan || ''}
                 onChange={(e) => updateQuestion(qIndex, 'keterangan', e.target.value)}
-                className="w-full mt-3 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[60px]"
-                placeholder="Notes / additional information..."
+                className="w-full mt-3 bg-white/50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y min-h-[60px] transition-all"
+                placeholder="Keterangan / informasi tambahan..."
               />
             </div>
             )
@@ -499,16 +499,16 @@ export default function ExamBuilder() {
           </div>
         )}
 
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
           <button
             onClick={addQuestion}
-            className="border border-dashed border-slate-300 hover:border-slate-500 text-slate-500 hover:text-slate-700 text-sm font-medium px-4 py-2.5 rounded-lg transition w-full"
+            className="w-full sm:flex-1 border-2 border-dashed border-indigo-200 hover:border-indigo-400 text-indigo-500 hover:text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 text-sm font-semibold px-4 py-3 rounded-2xl transition-all"
           >
             + Tambah Soal
           </button>
           <button
             onClick={() => setShowImport(true)}
-            className="border border-dashed border-blue-300 hover:border-blue-500 text-blue-500 hover:text-blue-700 text-sm font-medium px-4 py-2.5 rounded-lg transition w-full"
+            className="w-full sm:flex-1 border-2 border-dashed border-emerald-200 hover:border-emerald-400 text-emerald-500 hover:text-emerald-600 bg-emerald-50/50 hover:bg-emerald-50 text-sm font-semibold px-4 py-3 rounded-2xl transition-all"
           >
             + Import Soal
           </button>
@@ -525,10 +525,10 @@ export default function ExamBuilder() {
       </div>
 
       {showImport && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 rounded-t-xl flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-800">Import Soal</h2>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-slate-200/50 px-6 py-5 rounded-t-3xl flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-800">Import Soal</h2>
               <button
                 onClick={handleCloseImport}
                 className="text-slate-400 hover:text-slate-600 text-xl leading-none"
@@ -611,23 +611,23 @@ Pembahasan: Penjelasan soal ini`}
               )}
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 rounded-b-xl flex justify-end gap-3">
+            <div className="sticky bottom-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/50 px-6 py-4 rounded-b-3xl flex justify-end gap-3">
               <button
                 onClick={handleCloseImport}
-                className="text-sm text-slate-500 hover:text-slate-700 px-4 py-2"
+                className="text-sm font-medium text-slate-500 hover:text-slate-700 px-4 py-2.5"
               >
                 Batal
               </button>
               <button
                 onClick={handleParse}
-                className="text-sm text-slate-600 border border-slate-300 hover:border-slate-500 px-4 py-2 rounded-lg transition"
+                className="text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-5 py-2.5 rounded-xl transition-all"
               >
                 Parse Teks
               </button>
               <button
                 onClick={handleImport}
                 disabled={parsedQuestions.length === 0}
-                className="text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium px-4 py-2 rounded-lg transition"
+                className="text-sm bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition-all"
               >
                 Import {parsedQuestions.length > 0 ? `(${parsedQuestions.length} soal)` : ''}
               </button>

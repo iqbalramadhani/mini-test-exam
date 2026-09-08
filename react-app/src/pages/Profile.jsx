@@ -70,38 +70,38 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
+    <div className="min-h-screen bg-transparent py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-slate-200 rounded-lg transition"
+            className="p-2.5 bg-white/50 hover:bg-white rounded-xl shadow-sm border border-slate-200/50 text-slate-600 hover:text-indigo-600 transition-all"
           >
-            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-2xl font-bold text-slate-800">Profil</h1>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Profil</h1>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="flex border-b border-slate-200">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white overflow-hidden">
+          <div className="flex border-b border-slate-200/60 bg-white/50">
             <button
               onClick={() => setActiveTab('name')}
-              className={`flex-1 py-3 text-sm font-medium transition ${
+              className={`flex-1 py-4 text-sm font-semibold transition-all ${
                 activeTab === 'name'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
               Ubah Nama
             </button>
             <button
               onClick={() => setActiveTab('password')}
-              className={`flex-1 py-3 text-sm font-medium transition ${
+              className={`flex-1 py-4 text-sm font-semibold transition-all ${
                 activeTab === 'password'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
               }`}
             >
               Ubah Password
@@ -120,14 +120,14 @@ export default function Profile() {
                   <p className="text-sm text-slate-800 font-medium">{user?.email}</p>
                 </div>
 
-                <form onSubmit={handleNameSubmit} className="space-y-4">
+                <form onSubmit={handleNameSubmit} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Nama Panggilan</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Panggilan</label>
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                       placeholder="Masukkan nama panggilan"
                       minLength={1}
                       maxLength={100}
@@ -149,35 +149,35 @@ export default function Profile() {
                   <button
                     type="submit"
                     disabled={nameLoading}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium px-4 py-2 rounded-lg transition"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-medium px-6 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all"
                   >
-                    {nameLoading ? 'Menyimpan...' : 'Simpan'}
+                    {nameLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
                   </button>
                 </form>
               </div>
             )}
 
             {activeTab === 'password' && (
-              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <form onSubmit={handlePasswordSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Password Saat Ini</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password Saat Ini</label>
                   <input
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     placeholder="••••••••"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Password Baru</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password Baru</label>
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     placeholder="Minimal 6 karakter"
                     minLength={6}
                     required
@@ -185,12 +185,12 @@ export default function Profile() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Konfirmasi Password Baru</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Konfirmasi Password Baru</label>
                   <input
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                     placeholder="••••••••"
                     minLength={6}
                     required
@@ -211,20 +211,21 @@ export default function Profile() {
                 <button
                   type="submit"
                   disabled={passwordLoading}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium px-4 py-2 rounded-lg transition"
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white font-medium px-6 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all"
                 >
-                  {passwordLoading ? 'Menyimpan...' : 'Simpan'}
+                  {passwordLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
                 </button>
               </form>
             )}
           </div>
         </div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-8 text-center pb-8">
           <button
             onClick={handleLogout}
-            className="text-sm text-red-500 hover:text-red-700 transition"
+            className="text-sm font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-6 py-3 rounded-full transition-all inline-flex items-center gap-2"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
             Keluar dari akun
           </button>
         </div>
