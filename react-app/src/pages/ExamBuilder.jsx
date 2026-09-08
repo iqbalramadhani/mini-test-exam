@@ -26,6 +26,7 @@ export default function ExamBuilder() {
           correctChoiceIndex: q.correct_choice_index ?? 0,
           questionType: q.question_type || 'choice',
           explanation: q.explanation || '',
+          keterangan: q.keterangan || '',
         }))
         setQuestions(normalized)
       })
@@ -42,6 +43,7 @@ export default function ExamBuilder() {
         choices: ['', '', '', '', ''],
         questionType: 'choice',
         explanation: '',
+        keterangan: '',
         isNew: true,
       },
     ])
@@ -88,6 +90,7 @@ export default function ExamBuilder() {
             correct_choice_index: q.correctChoiceIndex ?? 0,
             question_type: q.questionType || 'choice',
             explanation: q.explanation || '',
+            keterangan: q.keterangan || '',
           },
           choices: [],
         }
@@ -232,6 +235,13 @@ export default function ExamBuilder() {
                 onChange={(e) => updateQuestion(qIndex, 'explanation', e.target.value)}
                 className="w-full mt-3 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[60px]"
                 placeholder="Explanation (optional)..."
+              />
+
+              <textarea
+                value={q.keterangan || ''}
+                onChange={(e) => updateQuestion(qIndex, 'keterangan', e.target.value)}
+                className="w-full mt-3 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[60px]"
+                placeholder="Notes / additional information..."
               />
             </div>
           ))}

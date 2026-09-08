@@ -204,11 +204,12 @@ class ExamController
         if (empty($question['body'])) {
             $this->error('Isi pertanyaan wajib diisi');
         }
-        if (count($choices) < 2) {
+        $qType = $question['question_type'] ?? 'choice';
+        if (($qType === 'choice' || $qType === 'multiple') && count($choices) < 2) {
             $this->error('Minimal 2 pilihan jawaban');
         }
 
-        $stmt = $this->db->prepare("INSERT INTO question (exam_id, body, correct_choice_index, sort_order, question_type, explanation) VALUES (:eid, :body, :cci, :so, :qt, :exp)");
+        $stmt = $this->db->prepare("INSERT INTO question (exam_id, body, correct_choice_index, sort_order, question_type, explanation, keterangan) VALUES (:eid, :body, :cci, :so, :qt, :exp, :ket)");
         $stmt->execute([
             ':eid' => $examId,
             ':body' => $question['body'],
@@ -216,6 +217,7 @@ class ExamController
             ':so' => count($choices),
             ':qt' => $question['question_type'] ?? 'choice',
             ':exp' => $question['explanation'] ?? null,
+            ':ket' => $question['keterangan'] ?? null,
         ]);
         $questionId = $this->db->lastInsertId();
 
@@ -248,12 +250,13 @@ class ExamController
         $question = $body['question'] ?? [];
         $choices = $body['choices'] ?? [];
 
-        $stmt = $this->db->prepare("UPDATE question SET body = :body, correct_choice_index = :cci, question_type = :qt, explanation = :exp WHERE id = :qid AND exam_id = :eid");
+        $stmt = $this->db->prepare("UPDATE question SET body = :body, correct_choice_index = :cci, question_type = :qt, explanation = :exp, keterangan = :ket WHERE id = :qid AND exam_id = :eid");
         $stmt->execute([
             ':body' => $question['body'] ?? '',
             ':cci' => (int)($question['correct_choice_index'] ?? 0),
             ':qt' => $question['question_type'] ?? 'choice',
             ':exp' => $question['explanation'] ?? null,
+            ':ket' => $question['keterangan'] ?? null,
             ':qid' => $questionId,
             ':eid' => $examId,
         ]);
