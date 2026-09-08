@@ -22,6 +22,20 @@ class Controller
     }
 
     /**
+     * Validate CSRF token for POST requests.
+     * Call this at the start of any POST-handling action.
+     * Redirects to problem page on failure.
+     */
+    protected function checkCsrf(): void
+    {
+        if (!Security::validateToken($_POST['csrf_token'] ?? '')) {
+            header('location: ' . URL . 'problem');
+            exit;
+        }
+        Security::invalidateToken();
+    }
+
+    /**
      * Open the database connection with the credentials from application/config/config.php
      */
     private function openDatabaseConnection()

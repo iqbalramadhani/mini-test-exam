@@ -4,6 +4,7 @@
     <div>
         <h3>Edit a song</h3>
         <form action="<?php echo URL; ?>songs/updatesong" method="POST">
+            <?php echo Security::tokenField(); ?>
             <label>Artist</label>
             <input autofocus type="text" name="artist" value="<?php echo htmlspecialchars($song->artist, ENT_QUOTES, 'UTF-8'); ?>" required />
             <label>Track</label>

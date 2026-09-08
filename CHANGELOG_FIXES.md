@@ -1,5 +1,35 @@
 # CHANGELOG — Perbaikan & Fitur MINI
 
+## Fix #3 — CSRF Check Dipindah ke Base Controller
+**Tanggal:** 2026-09-08
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `application/core/controller.php`, `application/controller/songs.php` |
+| **Masalah** | Validasi CSRF dilakukan di setiap action controller secara manual (duplikat kode) |
+| **Akar** | Tiap controller baru perlu mengingat validasi CSRF satu per satu |
+| **Fix** | Pindahkan ke `Controller::checkCsrf()` — method `protected` otomatis available di semua controller |
+| **Verifikasi** | `addSong` dan `updateSong` cukup panggil `$this->checkCsrf()` satu baris |
+| **Pelajaran** | Pola security check di base class = DRY + no-leak |
+| **Log Keyword** | `checkCsrf`, `protected`, `CSRF` |
+| **Deploy** | Tidak perlu deploy |
+
+## Fix #2 — Security Hardening: CSRF, XSS, Path Traversal
+**Tanggal:** 2026-09-08
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `application/libs/security.php`, `application/core/application.php`, `application/controller/songs.php`, `application/view/songs/index.php`, `application/view/songs/edit.php`, `public/index.php` |
+| **Masalah** | 1. Path traversal via URL controller parameter<br>2. CSRF void pada form POST (add/update song)<br>3. Tidak ada security headers<br>4. Input ID tidak divalidasi<br>5. Error reporting expose DB credentials di dev |
+| **Akar** | MINI v1 tidak dirancang untuk production security — semua validasi manual di setiap layer |
+| **Fix** | 1. Buat `Security` helper class: CSRF token generate/validate, controller name whitelist, ID validation<br>2. Router sekarang validasi controller name via regex sebelum load file<br>3. Form POST wajib CSRF token + server-side validation<br>4. Security headers: X-Frame-Options, X-Content-Type-Options, CSP, HSTS<br>5. Trim + validate input sebelum proses DB |
+| **Verifikasi** | `curl -d 'csrf_token=wrong' ...` → 404 redirect; invalid controller → fallback to problem; valid requests tetap work |
+| **Pelajaran** | MINIMALIST framework != insecure — perlu defensive coding di setiap user input point |
+| **Log Keyword** | `CSRF`, `path_traversal`, `Security::`, `htmlspecialchars`, `filter_var` |
+| **Deploy** | Tidak perlu deploy — fitur ini berjalan otomatis |
+
 ## Fix #1 — Migrasi Database Otomatis + ENV Support + PHP 8.2 Deprecation Fixes
 **Tanggal:** 2026-09-08
 **Status:** ✅ LIVE

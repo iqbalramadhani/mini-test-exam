@@ -27,7 +27,7 @@ class Application
             $page = new Home();
             $page->index();
 
-        } elseif (file_exists(APP . 'controller/' . $this->url_controller . '.php')) {
+        } elseif (!empty($this->url_controller) && Security::isValidControllerName($this->url_controller) && file_exists(APP . 'controller/' . $this->url_controller . '.php')) {
             // here we did check for controller: does such a controller exist ?
 
             // if so, then load this file and create this controller

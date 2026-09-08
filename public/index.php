@@ -34,6 +34,10 @@ require APP . 'libs/helper.php';
 // load application class
 require APP . 'core/application.php';
 require APP . 'core/controller.php';
+require APP . 'libs/security.php';
+
+// Set security headers on every request
+Security::setHeaders();
 
 // start the application
 $app = new Application();

@@ -4,6 +4,7 @@
     <div class="box">
         <h3>Add a song</h3>
         <form action="<?php echo URL; ?>songs/addsong" method="POST">
+            <?php echo Security::tokenField(); ?>
             <label>Artist</label>
             <input type="text" name="artist" value="" required />
             <label>Track</label>

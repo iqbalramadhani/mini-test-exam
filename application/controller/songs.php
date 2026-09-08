@@ -39,8 +39,15 @@ class Songs extends Controller
     {
         // if we have POST data to create a new song entry
         if (isset($_POST["submit_add_song"])) {
-            // do addSong() in model/model.php
-            $this->model->addSong($_POST["artist"], $_POST["track"],  $_POST["link"]);
+            $this->checkCsrf();
+
+            $artist = trim($_POST["artist"]);
+            $track = trim($_POST["track"]);
+            $link = trim($_POST["link"]);
+
+            if (!empty($artist) && !empty($track)) {
+                $this->model->addSong($artist, $track, $link);
+            }
         }
 
         // where to go after song has been added
@@ -59,9 +66,9 @@ class Songs extends Controller
     public function deleteSong($song_id)
     {
         // if we have an id of a song that should be deleted
-        if (isset($song_id)) {
+        if (isset($song_id) && Security::isValidId($song_id)) {
             // do deleteSong() in model/model.php
-            $this->model->deleteSong($song_id);
+            $this->model->deleteSong((int) $song_id);
         }
 
         // where to go after song has been deleted
@@ -105,8 +112,16 @@ class Songs extends Controller
     {
         // if we have POST data to create a new song entry
         if (isset($_POST["submit_update_song"])) {
-            // do updateSong() from model/model.php
-            $this->model->updateSong($_POST["artist"], $_POST["track"],  $_POST["link"], $_POST['song_id']);
+            $this->checkCsrf();
+
+            $artist = trim($_POST["artist"]);
+            $track = trim($_POST["track"]);
+            $link = trim($_POST["link"]);
+            $songId = $_POST['song_id'];
+
+            if (!empty($artist) && !empty($track) && Security::isValidId($songId)) {
+                $this->model->updateSong($artist, $track, $link, (int) $songId);
+            }
         }
 
         // where to go after song has been added
