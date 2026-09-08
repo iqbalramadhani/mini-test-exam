@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build && shx rm -rf ../public/react-app && shx cp -r dist ../public/react-app && shx cp public/favicon.svg public/icons.svg ../public/",
     "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -17,11 +19,16 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",
+    "jsdom": "^29.1.1",
+    "msw": "^2.15.0",
     "shx": "^0.3.4",
     "tailwindcss": "^4.3.3",
-    "vite": "^5.4.21"
+    "vite": "^5.4.21",
+    "vitest": "^4.1.11"
   }
 }
