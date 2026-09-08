@@ -3,6 +3,11 @@
 class Model
 {
     /**
+     * @var PDO
+     */
+    private $db;
+
+    /**
      * @param object $db A PDO database connection
      */
     function __construct($db)

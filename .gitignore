@@ -1,0 +1,15 @@
+# Environment secrets
+.env
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Composer
+/vendor/
+composer.lock
+
+# PHP
+*.log
+/tmp/

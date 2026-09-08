@@ -24,6 +24,7 @@ if (file_exists(ROOT . 'vendor/autoload.php')) {
 }
 
 // load application config (error reporting etc.)
+require APP . 'libs/env.php';
 require APP . 'config/config.php';
 
 // FOR DEVELOPMENT: this loads PDO-debug, a simple function that shows the SQL query (when using PDO).
