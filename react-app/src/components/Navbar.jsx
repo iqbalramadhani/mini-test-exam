@@ -14,7 +14,7 @@ export default function Navbar() {
         {user ? (
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-600">
-              Halo, <strong className="text-slate-800">{user.username}</strong>
+              Halo, <strong className="text-slate-800">{user.name || user.username}</strong>
             </span>
             <Link
               to="/exams"
@@ -27,6 +27,12 @@ export default function Navbar() {
               className="text-sm text-slate-600 hover:text-slate-900 transition"
             >
               Dashboard
+            </Link>
+            <Link
+              to="/profile"
+              className="text-sm text-slate-600 hover:text-slate-900 transition"
+            >
+              Profil
             </Link>
             <button
               onClick={logout}

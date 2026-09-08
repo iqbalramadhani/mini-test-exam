@@ -55,6 +55,12 @@ if (!$handled && $parts[0] === 'auth') {
         case 'logout':
             if ($method === 'POST') { $handled = $auth->logout(); break; }
             apiJsonError('Method not allowed', 405);
+        case 'update-profile':
+            if ($method === 'POST') { $handled = $auth->updateProfile(); break; }
+            apiJsonError('Method not allowed', 405);
+        case 'change-password':
+            if ($method === 'POST') { $handled = $auth->changePassword(); break; }
+            apiJsonError('Method not allowed', 405);
         default:
             apiJsonError('Not found', 404);
     }

@@ -8,6 +8,7 @@ import ExamBuilder from './pages/ExamBuilder'
 import AvailableExams from './pages/AvailableExams'
 import TakeExam from './pages/TakeExam'
 import ExamResult from './pages/ExamResult'
+import Profile from './pages/Profile'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -79,6 +80,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <ExamResult />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           }
         />

@@ -71,16 +71,17 @@ class AuthController
         }
 
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $this->db->prepare("INSERT INTO user (username, email, password_hash, role) VALUES (:u, :e, :p, 'user')");
-        $stmt->execute([':u' => $username, ':e' => $email, ':p' => $hash]);
+        $stmt = $this->db->prepare("INSERT INTO user (username, email, password_hash, role, name) VALUES (:u, :e, :p, 'user', :n)");
+        $stmt->execute([':u' => $username, ':e' => $email, ':p' => $hash, ':n' => $username]);
         $userId = $this->db->lastInsertId();
 
         $_SESSION['user_id'] = $userId;
         $_SESSION['username'] = $username;
+        $_SESSION['name'] = $username;
         $_SESSION['email'] = $email;
         $_SESSION['role'] = 'user';
 
-        $this->respond(['user' => ['id' => $userId, 'username' => $username, 'email' => $email, 'role' => 'user']]);
+        $this->respond(['user' => ['id' => $userId, 'username' => $username, 'name' => $username, 'email' => $email, 'role' => 'user']]);
     }
 
     public function login(): bool
@@ -94,7 +95,7 @@ class AuthController
             $this->error('Email/username dan password wajib diisi');
         }
 
-        $stmt = $this->db->prepare("SELECT id, username, email, password_hash, role FROM user WHERE (username = :id OR email = :id) AND is_active = 1");
+        $stmt = $this->db->prepare("SELECT id, username, email, password_hash, role, name FROM user WHERE (username = :id OR email = :id) AND is_active = 1");
         $stmt->execute([':id' => $identifier]);
         $user = $stmt->fetch();
 
@@ -104,10 +105,11 @@ class AuthController
 
         $_SESSION['user_id'] = $user->id;
         $_SESSION['username'] = $user->username;
+        $_SESSION['name'] = $user->name;
         $_SESSION['email'] = $user->email;
         $_SESSION['role'] = $user->role;
 
-        $this->respond(['user' => ['id' => $user->id, 'username' => $user->username, 'email' => $user->email, 'role' => $user->role]]);
+        $this->respond(['user' => ['id' => $user->id, 'username' => $user->username, 'name' => $user->name, 'email' => $user->email, 'role' => $user->role]]);
     }
 
     public function me(): bool
@@ -118,6 +120,7 @@ class AuthController
         $this->respond(['user' => [
             'id' => $_SESSION['user_id'],
             'username' => $_SESSION['username'],
+            'name' => $_SESSION['name'] ?? $_SESSION['username'],
             'email' => $_SESSION['email'],
             'role' => $_SESSION['role'] ?? 'user',
         ]]);
@@ -126,6 +129,61 @@ class AuthController
     public function logout(): bool
     {
         session_destroy();
+        $this->respond(['success' => true]);
+    }
+
+    public function updateProfile(): bool
+    {
+        requireAuth();
+
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $name = trim($body['name'] ?? '');
+
+        if (strlen($name) < 1 || strlen($name) > 100) {
+            $this->error('Nama harus 1-100 karakter');
+        }
+
+        $stmt = $this->db->prepare("UPDATE user SET name = :n WHERE id = :id");
+        $stmt->execute([':n' => $name, ':id' => $_SESSION['user_id']]);
+
+        $_SESSION['name'] = $name;
+
+        $this->respond(['user' => [
+            'id' => $_SESSION['user_id'],
+            'username' => $_SESSION['username'],
+            'name' => $_SESSION['name'],
+            'email' => $_SESSION['email'],
+            'role' => $_SESSION['role'] ?? 'user',
+        ]]);
+    }
+
+    public function changePassword(): bool
+    {
+        requireAuth();
+
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $currentPassword = $body['current_password'] ?? '';
+        $newPassword = $body['new_password'] ?? '';
+
+        if (empty($currentPassword) || empty($newPassword)) {
+            $this->error('Password saat ini dan password baru wajib diisi');
+        }
+        if (strlen($newPassword) < 6) {
+            $this->error('Password baru minimal 6 karakter');
+        }
+
+        $stmt = $this->db->prepare("SELECT password_hash FROM user WHERE id = :id");
+        $stmt->execute([':id' => $_SESSION['user_id']]);
+        $user = $stmt->fetch();
+
+        if (!$user || !password_verify($currentPassword, $user->password_hash)) {
+            $this->error('Password saat ini salah');
+        }
+
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $this->db->prepare("UPDATE user SET password_hash = :p WHERE id = :id");
+        $stmt->execute([':p' => $hash, ':id' => $_SESSION['user_id']]);
+
         $this->respond(['success' => true]);
     }
 }

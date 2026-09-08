@@ -31,8 +31,18 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  const updateProfile = async (name) => {
+    const data = await authApi.updateProfile({ name })
+    setUser(data.user)
+    return data
+  }
+
+  const changePassword = async (currentPassword, newPassword) => {
+    await authApi.changePassword({ current_password: currentPassword, new_password: newPassword })
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, isAuthenticated: !!user, updateProfile, changePassword }}>
       {children}
     </AuthContext.Provider>
   )

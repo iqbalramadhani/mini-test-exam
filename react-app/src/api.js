@@ -22,6 +22,8 @@ export const authApi = {
   login: (data) => request('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
   me: () => request('/auth/me'),
   logout: () => request('/auth/logout', { method: 'POST' }),
+  updateProfile: (data) => request('/auth/update-profile', { method: 'POST', body: JSON.stringify(data) }),
+  changePassword: (data) => request('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
 }
 
 export const examApi = {
