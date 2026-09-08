@@ -10,7 +10,9 @@
  * Configuration for: Error reporting
  * Useful to show every little problem during development, but only show hard errors in production
  */
-define('ENVIRONMENT', 'development');
+if (!defined('ENVIRONMENT')) {
+    define('ENVIRONMENT', 'development');
+}
 
 if (ENVIRONMENT == 'development' || ENVIRONMENT == 'dev') {
     error_reporting(E_ALL);
@@ -42,19 +44,19 @@ if (ENVIRONMENT == 'development' || ENVIRONMENT == 'dev') {
  * then replace this line with full URL (and sub-folder) and a trailing slash.
  */
 
-define('URL_PUBLIC_FOLDER', 'public');
-define('URL_PROTOCOL', '//');
-define('URL_DOMAIN', $_SERVER['HTTP_HOST'] ?? 'localhost');
-define('URL_SUB_FOLDER', str_replace(URL_PUBLIC_FOLDER, '', dirname($_SERVER['SCRIPT_NAME'])));
-define('URL', URL_PROTOCOL . URL_DOMAIN . URL_SUB_FOLDER);
+if (!defined('URL_PUBLIC_FOLDER')) define('URL_PUBLIC_FOLDER', 'public');
+if (!defined('URL_PROTOCOL')) define('URL_PROTOCOL', '//');
+if (!defined('URL_DOMAIN')) define('URL_DOMAIN', $_SERVER['HTTP_HOST'] ?? 'localhost');
+if (!defined('URL_SUB_FOLDER')) define('URL_SUB_FOLDER', str_replace(URL_PUBLIC_FOLDER, '', dirname($_SERVER['SCRIPT_NAME'])));
+if (!defined('URL')) define('URL', URL_PROTOCOL . URL_DOMAIN . URL_SUB_FOLDER);
 
 /**
  * Configuration for: Database
  * This is the place where you define your database credentials, database type etc.
  */
-define('DB_TYPE', getenv('DB_TYPE') ?: 'mysql');
-define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
-define('DB_NAME', getenv('DB_NAME') ?: 'mini');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
-define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');
+if (!defined('DB_TYPE')) define('DB_TYPE', getenv('DB_TYPE') ?: 'mysql');
+if (!defined('DB_HOST')) define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
+if (!defined('DB_NAME')) define('DB_NAME', getenv('DB_NAME') ?: 'mini');
+if (!defined('DB_USER')) define('DB_USER', getenv('DB_USER') ?: 'root');
+if (!defined('DB_PASS')) define('DB_PASS', getenv('DB_PASS') ?: '');
+if (!defined('DB_CHARSET')) define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');

@@ -13,3 +13,6 @@ composer.lock
 # PHP
 *.log
 /tmp/
+
+# Allow React build output to be committed for git-based deployment
+!public/react-app/

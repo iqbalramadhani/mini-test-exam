@@ -132,4 +132,31 @@ class Security
     {
         return $_SERVER['REQUEST_METHOD'] === 'GET';
     }
+
+    /**
+     * Check if user is logged in via session.
+     */
+    public static function isLoggedIn(): bool
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+    }
+
+    /**
+     * Get current logged-in user data from session.
+     */
+    public static function getUser(): array
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        return [
+            'id' => $_SESSION['user_id'] ?? null,
+            'username' => $_SESSION['username'] ?? null,
+            'email' => $_SESSION['email'] ?? null,
+            'role' => $_SESSION['role'] ?? 'user',
+        ];
+    }
 }
