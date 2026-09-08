@@ -16,6 +16,7 @@ export default function ExamBuilder() {
   const [importText, setImportText] = useState('')
   const [parsedQuestions, setParsedQuestions] = useState([])
   const [parseError, setParseError] = useState('')
+  const [unparsedLines, setUnparsedLines] = useState([])
 
   const LABELS = ['A', 'B', 'C', 'D', 'E', 'F']
 
@@ -26,15 +27,33 @@ export default function ExamBuilder() {
   }
 
   const parseQuestionsFromText = (text) => {
-    const lines = text.split('\n').map((l) => l.trimEnd())
+    const lines = text.split('\n').map((l) => l.trim())
     const questions = []
+    const unparsedLines = []
     let current = null
     let phase = 'question' // question | choices | answer | explanation
     let explanationLines = []
 
+    const isSectionKeyword = (upper) =>
+      upper.startsWith('NOMOR') ||
+      upper.startsWith('SOAL:') ||
+      /^NOMOR\s*\d+$/.test(upper) ||
+      upper === 'SOAL' ||
+      upper.startsWith('PEMBAHASAN:') ||
+      /^([Kk]unci|[Jj]awaban)[^\w]*([Jj]awaban|[Bb]enar)?[^\w]*:/i.test(upper) ||
+      upper.startsWith('OPTIONS:') ||
+      upper.startsWith('CHOICES:') ||
+      upper.startsWith('PILIHAN')
+
     const finishQuestion = () => {
       if (!current || !current.body.trim()) return
       const answerLabel = current.answer?.trim().toUpperCase()
+        .replace(/\s+/g, '')
+        .replace(/JAWABAN/g, '')
+        .replace(/KUNCI/g, '')
+        .replace(/BENAR/g, '')
+        .replace(/KEY/g, '')
+        .replace(/ANSWER/g, '')
       const answerIndex = answerLabel ? LABELS.indexOf(answerLabel) : 0
       if (answerIndex === -1) return
       questions.push({
@@ -47,6 +66,7 @@ export default function ExamBuilder() {
     }
 
     for (const line of lines) {
+      if (!line) continue
       const upper = line.toUpperCase()
 
       if (upper.startsWith('NOMOR') && upper.includes('SOAL:')) {
@@ -67,7 +87,15 @@ export default function ExamBuilder() {
         continue
       }
 
-      if (upper === 'SOAL' || upper === 'NOMOR') continue
+      if (/^NOMOR\s*\d+$/.test(upper)) {
+        finishQuestion()
+        current = { body: '', choices: [], answer: '' }
+        explanationLines = []
+        phase = 'question'
+        continue
+      }
+
+      if (upper === 'SOAL') continue
 
       if (upper.startsWith('PEMBAHASAN:')) {
         phase = 'explanation'
@@ -75,17 +103,18 @@ export default function ExamBuilder() {
         continue
       }
 
-      if (upper.startsWith('KUNCI JAWABAN:') || upper === 'JAWABAN:') {
+      const hasAnswerKeyword = (pattern) => upper.replace(/\s+/g, '').includes(pattern)
+      if (hasAnswerKeyword('KUNCIJAWABAN:') || upper === 'JAWABAN:') {
         if (current) {
-          current.answer = line.replace(/^(KUNCI\s+)?JAWABAN:\s*/i, '').trim()
+          current.answer = line.replace(/^(KUNCI\s*)?JAWABAN:\s*/i, '').trim()
         }
         phase = 'answer'
         continue
       }
 
-      if (upper === 'JAWABAN BENAR:' || upper.startsWith('KEY ANSWER:')) {
+      if (hasAnswerKeyword('JAWABANBENAR:') || hasAnswerKeyword('KEYANSWER:')) {
         if (current) {
-          current.answer = line.replace(/^(JAWABAN\s+BENAR|KEY\s+ANSWER):\s*/i, '').trim()
+          current.answer = line.replace(/^(JAWABAN\s*BENAR|KEY\s*ANSWER):\s*/i, '').trim()
         }
         phase = 'answer'
         continue
@@ -102,12 +131,11 @@ export default function ExamBuilder() {
       }
 
       if (phase === 'choices' && current) {
-        const match = line.match(/^([A-F])\.\s*(.+)/i)
+        const match = line.match(/^\s*([A-F])\.\s*(.+)/i)
         if (match) {
           const idx = LABELS.indexOf(match[1].toUpperCase())
-          if (idx >= 0 && idx < current.choices.length) {
-            current.choices[idx] = match[2].trim()
-          } else {
+          if (idx >= 0) {
+            while (current.choices.length <= idx) current.choices.push('')
             current.choices[idx] = match[2].trim()
           }
           continue
@@ -121,22 +149,31 @@ export default function ExamBuilder() {
 
       if (phase === 'explanation') {
         explanationLines.push(line)
+        continue
+      }
+
+      if (!isSectionKeyword(upper)) {
+        unparsedLines.push(line)
       }
     }
 
     finishQuestion()
-    return questions
+    return { questions, unparsedLines }
   }
 
   const handleParse = () => {
     setParseError('')
-    const parsed = parseQuestionsFromText(importText)
-    if (parsed.length === 0) {
-      setParseError('Tidak ada soal yang berhasil diparse. Periksa format teks.')
+    const { questions, unparsedLines: badLines } = parseQuestionsFromText(importText)
+    setUnparsedLines(badLines)
+    if (questions.length === 0) {
+      const hint = badLines.length > 0
+        ? `Format tidak dikenali. Baris yang tidak terbaca: "${badLines[0].substring(0, 60)}"\n\nFormat yang didukung:\n  Nomor X Soal: pertanyaan\n  Pilihan Jawaban:\n    A. opsi...\n    B. opsi...\n  Kunci Jawaban: A`
+        : 'Tidak ada soal yang berhasil diparse. Periksa format teks.'
+      setParseError(hint)
       setParsedQuestions([])
       return
     }
-    setParsedQuestions(parsed)
+    setParsedQuestions(questions)
   }
 
   const handleImport = () => {
@@ -149,6 +186,7 @@ export default function ExamBuilder() {
     setImportText('')
     setParsedQuestions([])
     setParseError('')
+    setUnparsedLines([])
   }
 
   const handleCloseImport = () => {
@@ -156,6 +194,7 @@ export default function ExamBuilder() {
     setImportText('')
     setParsedQuestions([])
     setParseError('')
+    setUnparsedLines([])
   }
 
   useEffect(() => {
@@ -507,8 +546,20 @@ Pembahasan: Penjelasan soal ini`}
               </div>
 
               {parseError && (
-                <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3">
+                <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg px-4 py-3 whitespace-pre-wrap">
                   {parseError}
+                </div>
+              )}
+
+              {unparsedLines.length > 0 && parsedQuestions.length === 0 && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-lg px-4 py-3">
+                  <p className="font-semibold mb-1">Baris tidak dikenali:</p>
+                  <ul className="list-disc list-inside text-xs space-y-0.5">
+                    {unparsedLines.slice(0, 5).map((line, i) => (
+                      <li key={i} className="font-mono break-all">{line}</li>
+                    ))}
+                    {unparsedLines.length > 5 && <li className="text-amber-500 italic">...dan {unparsedLines.length - 5} baris lainnya</li>}
+                  </ul>
                 </div>
               )}
 
