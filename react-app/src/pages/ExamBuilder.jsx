@@ -20,7 +20,14 @@ export default function ExamBuilder() {
     ])
       .then(([examData, questionsData]) => {
         setExam(examData.exam)
-        setQuestions(questionsData.questions)
+        const normalized = (questionsData.questions || []).map((q) => ({
+          ...q,
+          choices: q.choices.map((c) => c.text),
+          correctChoiceIndex: q.correct_choice_index ?? 0,
+          questionType: q.question_type || 'choice',
+          explanation: q.explanation || '',
+        }))
+        setQuestions(normalized)
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
@@ -32,7 +39,7 @@ export default function ExamBuilder() {
       {
         body: '',
         correctChoiceIndex: 0,
-        choices: ['', '', '', ''],
+        choices: ['', '', '', '', ''],
         questionType: 'choice',
         explanation: '',
         isNew: true,
@@ -74,17 +81,21 @@ export default function ExamBuilder() {
     try {
       for (const q of questions) {
         if (!q.body.trim()) continue
-        const validChoices = q.choices.filter((c) => c.trim())
-        if (validChoices.length < 2) continue
 
         const payload = {
           question: {
             body: q.body,
-            correct_choice_index: q.correctChoiceIndex,
+            correct_choice_index: q.correctChoiceIndex ?? 0,
             question_type: q.questionType || 'choice',
             explanation: q.explanation || '',
           },
-          choices: validChoices.map((text) => ({ text })),
+          choices: [],
+        }
+
+        if (q.questionType === 'choice' || q.questionType === 'multiple') {
+          const validChoices = (q.choices || []).filter((c) => typeof c === 'string' && c.trim())
+          if (validChoices.length < 2) continue
+          payload.choices = validChoices.map((text) => ({ text }))
         }
 
         if (q.id) {
