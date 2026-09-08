@@ -9,6 +9,10 @@ export default function Dashboard() {
   const [newTitle, setNewTitle] = useState('')
   const [newDesc, setNewDesc] = useState('')
   const [newTime, setNewTime] = useState(60)
+  const [editingExam, setEditingExam] = useState(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+  const [editTime, setEditTime] = useState(60)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -28,6 +32,40 @@ export default function Dashboard() {
       setNewDesc('')
       setNewTime(60)
       setShowCreate(false)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleToggleStatus = async (exam) => {
+    const newValue = exam.is_published ? 0 : 1
+    try {
+      await examApi.update(exam.id, {
+        title: exam.title,
+        description: exam.description || '',
+        time_limit_minutes: exam.time_limit_minutes,
+        is_published: newValue,
+      })
+      setExams(exams.map((ex) => ex.id === exam.id ? { ...ex, is_published: newValue } : ex))
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const openEdit = (exam) => {
+    setEditingExam(exam)
+    setEditTitle(exam.title)
+    setEditDesc(exam.description || '')
+    setEditTime(exam.time_limit_minutes)
+  }
+
+  const handleUpdate = async (e) => {
+    e.preventDefault()
+    if (!editTitle.trim()) return
+    try {
+      await examApi.update(editingExam.id, { title: editTitle, description: editDesc, time_limit_minutes: editTime })
+      setExams(exams.map((ex) => ex.id === editingExam.id ? { ...ex, title: editTitle, description: editDesc, time_limit_minutes: editTime } : ex))
+      setEditingExam(null)
     } catch (err) {
       setError(err.message)
     }
@@ -128,6 +166,62 @@ export default function Dashboard() {
           </div>
         )}
 
+        {editingExam && (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">Edit Ujian</h2>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Judul Ujian</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Deskripsi</label>
+                <textarea
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={2}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Waktu (menit): <span className="text-blue-600 font-semibold">{editTime}</span>
+                </label>
+                <input
+                  type="range"
+                  min="15"
+                  max="180"
+                  step="15"
+                  value={editTime}
+                  onChange={(e) => setEditTime(Number(e.target.value))}
+                  className="w-full accent-blue-600"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setEditingExam(null)}
+                  className="text-sm text-slate-500 hover:text-slate-700 px-4 py-2"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+                >
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {exams.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
             <p className="text-slate-400 text-lg">Belum ada ujian</p>
@@ -155,7 +249,10 @@ export default function Dashboard() {
                       <span>•</span>
                       <span>{exam.time_limit_minutes} menit</span>
                       <span>•</span>
-                      <span>
+                      <span
+                        onClick={() => handleToggleStatus(exam)}
+                        className="cursor-pointer hover:opacity-70 transition"
+                      >
                         {exam.is_published ? (
                           <span className="text-green-500">Publik</span>
                         ) : (
@@ -165,9 +262,15 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => openEdit(exam)}
+                      className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md transition"
+                    >
+                      Edit
+                    </button>
                     <Link
                       to={`/exam/${exam.id}/build`}
-                      className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-md transition"
+                      className="text-sm bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-md transition"
                     >
                       Edit Soal
                     </Link>
