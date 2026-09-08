@@ -1,5 +1,20 @@
 # CHANGELOG — Perbaikan & Fitur MINI
 
+## Fix #4 — Batch Question Import dari Teks (Modal Parse)
+**Tanggal:** 2026-09-08
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `react-app/src/pages/ExamBuilder.jsx` |
+| **Masalah** | Soalkan harus ditambahkan satu per satu secara manual — tidak praktis untuk import banyak soal sekaligus dari format teks |
+| **Akar** | Tidak ada parser untuk format teks soal baku (Nomor + Soal + Pilihan + Kunci + Pembahasan) |
+| **Fix** | 1. Tambah state `showImport`, `importText`, `parsedQuestions`, `parseError`<br>2. Tambah fungsi `parseQuestionsFromText()` — state machine yang mengenali baris "Nomor N Soal:", "Pilihan Jawaban:", "Kunci Jawaban: X", "Pembahasan:" beserta variasi whitespace dan label pilihan (A./B./C./D./E.)<br>3. Tambah tombol "+ Import Soal" berdampingan dengan "+ Tambah Soal"<br>4. Tambah modal overlay dengan textarea, tombol Parse, preview soal yang terurai, dan tombol Import yang menambah ke state `questions`<br>5. Build Vite di-rebuild ke `public/react-app/` |
+| **Verifikasi** | Paste teks format contoh → klik Parse → tampil preview soal �� klik Import → soal muncul di builder → Simpan Semua menyimpan ke DB → reload halaman tetap ada |
+| **Pelajaran** | State machine sederhana (track `phase` per section) cukup untuk parsing teks ujian tanpa library eksternal |
+| **Log Keyword** | `parseQuestionsFromText`, `showImport`, `batch import`, `modal`, `useState` |
+| **Deploy** | `npm run build` → copy `dist/` ke `public/react-app/` |
+
 ## Fix #3 — CSRF Check Dipindah ke Base Controller
 **Tanggal:** 2026-09-08
 **Status:** ✅ LIVE

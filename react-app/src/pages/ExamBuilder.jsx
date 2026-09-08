@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { examApi } from '../api'
 
 export default function ExamBuilder() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const [exam, setExam] = useState(null)
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
   const [showImport, setShowImport] = useState(false)
   const [importText, setImportText] = useState('')
   const [parsedQuestions, setParsedQuestions] = useState([])
@@ -39,7 +41,6 @@ export default function ExamBuilder() {
         body: current.body,
         correctChoiceIndex: answerIndex,
         choices: padChoices(current.choices),
-        questionType: 'choice',
         explanation: explanationLines.join('\n').trim(),
         keterangan: '',
       })
@@ -174,7 +175,6 @@ export default function ExamBuilder() {
             ...q,
             choices: loadedChoices,
             correctChoiceIndex: q.correct_choice_index ?? 0,
-            questionType: q.question_type || 'choice',
             explanation: q.explanation || '',
             keterangan: q.keterangan || '',
           }
@@ -192,12 +192,12 @@ export default function ExamBuilder() {
         body: '',
         correctChoiceIndex: 0,
         choices: ['', '', '', '', ''],
-        questionType: 'choice',
         explanation: '',
         keterangan: '',
         isNew: true,
       },
     ])
+    Swal.fire({ icon: 'success', title: 'Soal baru ditambahkan', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true })
   }
 
   const updateQuestion = (index, field, value) => {
@@ -213,57 +213,70 @@ export default function ExamBuilder() {
     setQuestions(updated)
   }
 
-  const removeQuestion = async (qIndex) => {
+  const saveQuestion = async (qIndex) => {
     const q = questions[qIndex]
-    if (q.id) {
-      if (!confirm('Hapus soal ini?')) return
-      try {
-        await examApi.deleteQuestion(id, q.id)
-        setQuestions(questions.filter((_, i) => i !== qIndex))
-      } catch (err) {
-        setError(err.message)
+    if (!q.body.trim()) {
+      Swal.fire({ icon: 'error', title: 'Validasi gagal', text: 'Isi pertanyaan wajib diisi', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true })
+      return
+    }
+    setSaving(true)
+    try {
+      const payload = {
+        question: {
+          body: q.body,
+          correct_choice_index: q.correctChoiceIndex ?? 0,
+          question_type: 'choice',
+          explanation: q.explanation || '',
+          keterangan: q.keterangan || '',
+        },
+        choices: [],
       }
-    } else {
-      setQuestions(questions.filter((_, i) => i !== qIndex))
+
+      const validChoices = (q.choices || []).filter((c) => typeof c === 'string' && c.trim())
+      if (validChoices.length < 2) {
+        setSaving(false)
+        Swal.fire({ icon: 'error', title: 'Validasi gagal', text: 'Minimal 2 pilihan jawaban', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true })
+        return
+      }
+      payload.choices = validChoices.map((text) => ({ text }))
+
+      if (q.id) {
+        await examApi.updateQuestion(id, q.id, payload)
+      } else {
+        const res = await examApi.addQuestion(id, payload)
+        const updated = [...questions]
+        updated[qIndex].id = res.question_id
+        setQuestions(updated)
+      }
+      setSaving(false)
+      Swal.fire({ icon: 'success', title: 'Soal berhasil disimpan', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true })
+    } catch (err) {
+      setSaving(false)
+      Swal.fire({ icon: 'error', title: 'Gagal menyimpan', text: err.message, toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true })
     }
   }
 
-  const saveAll = async () => {
-    setSaving(true)
-    setError('')
+  const removeQuestion = async (qIndex) => {
+    const q = questions[qIndex]
+    const result = await Swal.fire({
+      title: 'Hapus soal?',
+      text: 'Soal yang dihapus tidak dapat dikembalikan.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Ya, hapus',
+      cancelButtonText: 'Batal',
+    })
+    if (!result.isConfirmed) return
     try {
-      for (const q of questions) {
-        if (!q.body.trim()) continue
-
-        const payload = {
-          question: {
-            body: q.body,
-            correct_choice_index: q.correctChoiceIndex ?? 0,
-            question_type: q.questionType || 'choice',
-            explanation: q.explanation || '',
-            keterangan: q.keterangan || '',
-          },
-          choices: [],
-        }
-
-        if (q.questionType === 'choice' || q.questionType === 'multiple') {
-          const validChoices = (q.choices || []).filter((c) => typeof c === 'string' && c.trim())
-          if (validChoices.length < 2) continue
-          payload.choices = validChoices.map((text) => ({ text }))
-        }
-
-        if (q.id) {
-          await examApi.updateQuestion(id, q.id, payload)
-        } else {
-          const res = await examApi.addQuestion(id, payload)
-          q.id = res.question_id
-        }
+      if (q.id) {
+        await examApi.deleteQuestion(id, q.id)
       }
-      navigate(`/dashboard`)
+      setQuestions(questions.filter((_, i) => i !== qIndex))
+      Swal.fire({ icon: 'success', title: 'Soal dihapus', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true })
     } catch (err) {
-      setError(err.message)
-    } finally {
-      setSaving(false)
+      Swal.fire({ icon: 'error', title: 'Gagal menghapus', text: err.message, toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true })
     }
   }
 
@@ -313,73 +326,70 @@ export default function ExamBuilder() {
         )}
 
         <div className="space-y-4 mb-6">
-          {questions.map((q, qIndex) => (
+          {questions.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((q, localIndex) => {
+            const qIndex = (currentPage - 1) * ITEMS_PER_PAGE + localIndex
+            return (
             <div
               key={q.id || qIndex}
               className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm"
             >
-              <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
                   Soal {qIndex + 1}
                 </span>
-                <button
-                  onClick={() => removeQuestion(qIndex)}
-                  className="text-slate-300 hover:text-red-500 transition text-sm"
-                >
-                  Hapus
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => saveQuestion(qIndex)}
+                    disabled={saving}
+                    className="text-xs bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium px-3 py-1.5 rounded-lg transition"
+                  >
+                    {saving ? 'Menyimpan...' : 'Simpan'}
+                  </button>
+                  <button
+                    onClick={() => removeQuestion(qIndex)}
+                    className="text-slate-300 hover:text-red-500 transition text-sm"
+                  >
+                    Hapus
+                  </button>
+                </div>
               </div>
 
-              <div className="flex gap-3 mb-3">
-                <select
-                  value={q.questionType || 'choice'}
-                  onChange={(e) => updateQuestion(qIndex, 'questionType', e.target.value)}
-                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="choice">Single Choice</option>
-                  <option value="multiple">Multiple Choice</option>
-                  <option value="fill">Fill-in</option>
-                  <option value="essay">Essay</option>
-                </select>
+              <div className="mb-3">
                 <textarea
                   value={q.body}
                   onChange={(e) => updateQuestion(qIndex, 'body', e.target.value)}
-                  className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[80px]"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[80px]"
                   placeholder="Tulis pertanyaan di sini..."
                 />
               </div>
 
-              {(q.questionType === 'choice' || q.questionType === 'multiple') && (
-                <>
-                  <div className="mt-3 space-y-2">
-                    {q.choices.map((choice, cIndex) => (
-                      <div key={cIndex} className="flex items-center gap-2">
-                        <button
-                          onClick={() => updateQuestion(qIndex, 'correctChoiceIndex', cIndex)}
-                          className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition shrink-0 ${
-                            q.correctChoiceIndex === cIndex
-                              ? 'border-green-500 bg-green-500 text-white'
-                              : 'border-slate-200 text-slate-400 hover:border-slate-400'
-                          }`}
-                          title="Jawaban benar"
-                        >
-                          {LABELS[cIndex]}
-                        </button>
-                        <input
-                          type="text"
-                          value={choice}
-                          onChange={(e) => updateChoice(qIndex, cIndex, e.target.value)}
-                          className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder={`Pilihan ${LABELS[cIndex]}`}
-                        />
-                      </div>
-                    ))}
+              <div className="mt-3 space-y-2">
+                {q.choices.map((choice, cIndex) => (
+                  <div key={cIndex} className="flex items-center gap-2">
+                    <button
+                      onClick={() => updateQuestion(qIndex, 'correctChoiceIndex', cIndex)}
+                      className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition shrink-0 ${
+                        q.correctChoiceIndex === cIndex
+                          ? 'border-green-500 bg-green-500 text-white'
+                          : 'border-slate-200 text-slate-400 hover:border-slate-400'
+                      }`}
+                      title="Jawaban benar"
+                    >
+                      {LABELS[cIndex]}
+                    </button>
+                    <input
+                      type="text"
+                      value={choice}
+                      onChange={(e) => updateChoice(qIndex, cIndex, e.target.value)}
+                      className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder={`Pilihan ${LABELS[cIndex]}`}
+                    />
                   </div>
-                  <p className="text-xs text-slate-400 mt-2">
-                    Klik huruf untuk tandai jawaban yang benar
-                  </p>
-                </>
-              )}
+                ))}
+              </div>
+              <p className="text-xs text-slate-400 mt-2">
+                Klik huruf untuk tandai jawaban yang benar
+              </p>
 
               <textarea
                 value={q.explanation || ''}
@@ -395,8 +405,46 @@ export default function ExamBuilder() {
                 placeholder="Notes / additional information..."
               />
             </div>
-          ))}
+            )
+          })}
         </div>
+
+        {questions.length > ITEMS_PER_PAGE && (
+          <div className="flex items-center justify-between border-t border-slate-200 pt-4 mb-6">
+            <p className="text-sm text-slate-500">
+              Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, questions.length)} dari {questions.length} soal
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              >
+                ←
+              </button>
+              {Array.from({ length: Math.ceil(questions.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-8 h-8 text-sm rounded-lg transition ${
+                    page === currentPage
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-slate-300 hover:bg-slate-50 text-slate-600'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(questions.length / ITEMS_PER_PAGE), p + 1))}
+                disabled={currentPage === Math.ceil(questions.length / ITEMS_PER_PAGE)}
+                className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              >
+                →
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-3 mb-6">
           <button
@@ -413,20 +461,13 @@ export default function ExamBuilder() {
           </button>
         </div>
 
-        <div className="flex justify-end mt-6 gap-3">
+        <div className="flex justify-end mt-6">
           <Link
             to="/dashboard"
             className="text-sm text-slate-500 hover:text-slate-700 px-4 py-2"
           >
-            Batal
+            ← Kembali ke Dashboard
           </Link>
-          <button
-            onClick={saveAll}
-            disabled={saving}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium px-6 py-2 rounded-lg transition"
-          >
-            {saving ? 'Menyimpan...' : 'Simpan Semua'}
-          </button>
         </div>
       </div>
 

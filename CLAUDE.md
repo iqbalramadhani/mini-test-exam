@@ -68,6 +68,44 @@ URL segments map directly to `controller/file` → `method`:
 
 The `.htaccess` in [public/](public/.htaccess) catches all non-file/non-directory requests and rewrites them to `index.php?url=<path>`. The root [.htaccess](.htaccess) is a fallback that forwards everything into `/public/` — if your vhost is pointed at `/public` directly, this file is unused.
 
+## React App (Exam Builder)
+
+A Vite + React frontend lives in `react-app/`. It powers the exam builder UI at `/exam/:id/build`.
+
+```bash
+cd react-app
+npm install    # install dependencies (React, React Router, SweetAlert2, Tailwind)
+npm run dev    # start dev server
+npm run build  # production build → copies to public/react-app/
+```
+
+### Key Files
+
+| Path | Purpose |
+|---|---|
+| [src/pages/ExamBuilder.jsx](react-app/src/pages/ExamBuilder.jsx) | Main exam builder — per-question save/add/delete with SweetAlert2 |
+| [src/api.js](react-app/src/api.js) | API client wrapping all backend endpoints |
+| [src/pages/Dashboard.jsx](react-app/src/pages/Dashboard.jsx) | Exam list / dashboard |
+| [src/App.jsx](react-app/src/App.jsx) | Routes: `/login`, `/register`, `/dashboard`, `/exam/:id/build` |
+
+### Backend API for Exams
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/exams` | List all exams |
+| GET | `/api/exams/:id` | Get exam + questions + choices |
+| POST | `/api/exams` | Create exam |
+| PUT | `/api/exams/:id` | Update exam metadata |
+| DELETE | `/api/exams/:id` | Delete exam |
+| GET | `/api/exams/:id/questions` | List questions for an exam |
+| POST | `/api/exams/:id/questions` | Add a new question |
+| PUT | `/api/exams/:id/questions/:qid` | Update a single question |
+| DELETE | `/api/exams/:id/questions/:qid` | Delete a question |
+
+### Exam Builder Pattern
+
+Soal hanya bertipe **pilihan ganda satu jawaban benar** (single choice). Tidak ada dropdown tipe soal. Setiap soal memiliki tombol **Simpan** sendiri — simpan per soal, bukan bulk save. Soal baru ditandai `isNew: true` sampai disimpan ke backend. SweetAlert2 digunakan untuk semua konfirmasi dan notifikasi (tambah, simpan, hapus). Pagination aktif di 10 soal per halaman.
+
 ## Security Notes
 
 - Uses PDO with parameterized queries throughout — no SQL injection vector from normal usage.
