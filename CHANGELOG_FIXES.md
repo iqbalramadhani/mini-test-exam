@@ -1,5 +1,50 @@
 # CHANGELOG — Perbaikan & Fitur MINI
 
+## Fix #11 — Import Soal Pakai Satu Endpoint Bulk (Bukan Loop Per-Soal)
+**Tanggal:** 2026-09-09
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `application/api/exams.php`, `application/core/api_route.php`, `react-app/src/api.js`, `react-app/src/pages/ExamBuilder.jsx` |
+| **Masalah** | `handleImport()` memanggil `examApi.addQuestion()` berulang kali (loop N soal = N request HTTP) |
+| **Akar** | Tidak ada endpoint bulk insert soal — hanya ada `POST /api/exams/:id/questions` untuk satu soal |
+| **Fix** | 1. Tambah method `ExamController::storeQuestionsBulk(int $examId)` di `exams.php`: menerima `{questions: [...]}` dalam satu body, insert semua soal + choices dalam satu transaction.<br>2. Daftarkan route `POST /api/exams/:id/questions/bulk` di `api_route.php`.<br>3. Tambah `addQuestionsBulk` di `api.js`.<br>4. Ubah `handleImport()` di `ExamBuilder.jsx` — kirim semua soal sekaligus dalam satu request, mapping `res.question_ids` kembali ke state. |
+| **Verifikasi** | Import 3 soal → satu request POST ke `/exams/:id/questions/bulk`, semua soal tersimpan, ID dikembalikan dan di-map ke state |
+| **Pelajaran** | Batch operations harus pakai single transaction — lebih cepat, atomic, dan satu request daripada N request sequential |
+| **Log Keyword** | `storeQuestionsBulk`, `bulk`, `transaction`, `addQuestionsBulk` |
+| **Deploy** | `cd react-app && npm run build` → copy `dist/` ke `public/react-app/` |
+
+## Fix #10 — Tombol "Mulai Ujian" Dinonaktifkan Bila Ujian Belum Punya Soal
+**Tanggal:** 2026-09-09
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `react-app/src/pages/AvailableExams.jsx` |
+| **Masalah** | Ujian yang sudah dipublikasi tapi belum punya soal tetap menampilkan tombol "Mulai Ujian" yang bisa diklik — user masuk lalu API POST `/attempts/start/:id` menolak dengan error "Ujian ini belum memiliki soal" |
+| **Akar** | Tidak ada guard di UI; `question_count` sudah tersedia dari endpoint `GET /api/attempts/published` (LEFT JOIN question) tapi tidak dipakai untuk disable tombol |
+| **Fix** | Kondisi `exam.question_count > 0`: render `<Link>` "Mulai Ujian" seperti biasa; selain itu render `<span>` non-klik abu-abu bertuliskan "Belum ada soal" |
+| **Verifikasi** | Ujian dengan 0 soal → tombol diganti label "Belum ada soal", tidak bisa diklik; ujian dengan soal → tombol "Mulai Ujian" normal |
+| **Pelajaran** | Validasi server (400 "belum memiliki soal") sebaiknya selalu dipantulkan ke UI sebagai state disabled — cegah user masuk ke flow yang pasti gagal |
+| **Log Keyword** | `question_count`, `AvailableExams`, `Mulai Ujian`, `disabled` |
+| **Deploy** | `cd react-app && npm run build` → copy `dist/` ke `public/react-app/` |
+
+## Fix #9 — Import Soal Langsung Simpan ke Database
+**Tanggal:** 2026-09-09
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `react-app/src/pages/ExamBuilder.jsx` |
+| **Masalah** | Tombol "Import" di modal hanya menambahkan soal ke state lokal (`questions`), tidak menyimpan ke database. User harus klik "Simpan" per soal satu per satu agar soal masuk DB — jika lupa, saat ujian dibuka muncul error "Ujian ini belum memiliki soal" |
+| **Akar** | `handleImport()` sebelumnya hanya melakukan `setQuestions([...])` tanpa memanggil API `addQuestion`. Pola ini konsisten dengan workflow manual ("Tambah Soal" → isi → simpan per soal), tapi kurang intuitif untuk import massal |
+| **Fix** | Ubah `handleImport` menjadi async: setiap soal di-import via `examApi.addQuestion(id, payload)` secara parallel menggunakan `Promise.all`, lalu state diupdate dengan `id` yang dikembalikan API. Tambah loading state + toast notifikasi jumlah soal berhasil disimpan. |
+| **Verifikasi** | Test import 3 soal sekaligus → semua langsung tersimpan di DB, muncul di list builder tanpa perlu klik "Simpan" per soal, ujian bisa diikuti tanpa error "belum memiliki soal" |
+| **Pelajaran** | Untuk fitur "import batch", asumsikan user mengharapkan save-otomatis — bukan staging lokal. Feedback toast jumlah soal yang berhasil disimpan memberikan konfirmasi jelas |
+| **Log Keyword** | `handleImport`, `examApi.addQuestion`, `Promise.all`, `batch import`, `save` |
+| **Deploy** | `cd react-app && npm run build` → copy `dist/` ke `public/react-app/` |
+
 ## Fix #8 — Feedback Format Saat Parse Gagal (User Awareness)
 **Tanggal:** 2026-09-09
 **Status:** ✅ LIVE

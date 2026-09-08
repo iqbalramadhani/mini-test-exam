@@ -81,6 +81,9 @@ if (!$handled && $parts[0] === 'exams') {
         if ($method === 'GET') { $handled = $exam->listQuestions((int)$examId); }
         elseif ($method === 'POST') { $handled = $exam->storeQuestion((int)$examId); }
         else { apiJsonError('Method not allowed', 405); }
+    } elseif ($sub === 'questions' && $questionId === 'bulk') {
+        if ($method === 'POST') { $handled = $exam->storeQuestionsBulk((int)$examId); }
+        else { apiJsonError('Method not allowed', 405); }
     } elseif ($sub === 'questions' && $questionId) {
         if ($method === 'PUT') { $handled = $exam->updateQuestion((int)$examId, (int)$questionId); }
         elseif ($method === 'DELETE') { $handled = $exam->deleteQuestion((int)$examId, (int)$questionId); }

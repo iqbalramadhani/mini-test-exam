@@ -235,6 +235,68 @@ class ExamController
         $this->respond(['success' => true, 'question_id' => $questionId]);
     }
 
+    public function storeQuestionsBulk(int $examId): bool
+    {
+        $this->requireAuth();
+
+        $stmt = $this->db->prepare("SELECT id FROM exam WHERE id = :id");
+        $stmt->execute([':id' => $examId]);
+        if (!$stmt->fetch()) {
+            $this->error('Ujian tidak ditemukan', 404);
+        }
+
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $questions = $body['questions'] ?? [];
+
+        if (!is_array($questions) || empty($questions)) {
+            $this->error('Daftar soal kosong');
+        }
+
+        $this->db->beginTransaction();
+        try {
+            $ids = [];
+            $labelMap = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+            $qStmt = $this->db->prepare("INSERT INTO question (exam_id, body, correct_choice_index, sort_order, question_type, explanation, keterangan) VALUES (:eid, :body, :cci, :so, :qt, :exp, :ket)");
+            $cStmt = $this->db->prepare("INSERT INTO choice (question_id, label, text) VALUES (:qid, :label, :text)");
+
+            foreach ($questions as $q) {
+                $bodyText = trim($q['body'] ?? '');
+                if (!$bodyText) continue;
+
+                $choices = $q['choices'] ?? [];
+                if (count($choices) < 2) continue;
+
+                $qStmt->execute([
+                    ':eid' => $examId,
+                    ':body' => $bodyText,
+                    ':cci' => (int)($q['correctChoiceIndex'] ?? $q['correct_choice_index'] ?? 0),
+                    ':so' => count($choices),
+                    ':qt' => $q['question_type'] ?? 'choice',
+                    ':exp' => $q['explanation'] ?? null,
+                    ':ket' => $q['keterangan'] ?? null,
+                ]);
+                $qid = (int)$this->db->lastInsertId();
+                $ids[] = $qid;
+
+                foreach ($choices as $idx => $choice) {
+                    $label = $labelMap[$idx] ?? chr(65 + $idx);
+                    $cStmt->execute([
+                        ':qid' => $qid,
+                        ':label' => $label,
+                        ':text' => is_string($choice) ? trim($choice) : trim($choice['text'] ?? ''),
+                    ]);
+                }
+            }
+
+            $this->db->commit();
+            $this->respond(['success' => true, 'question_ids' => $ids, 'count' => count($ids)], 201);
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            $this->error('Gagal menyimpan soal');
+        }
+    }
+
     public function updateQuestion(int $examId, int $questionId): bool
     {
         $this->requireAuth();

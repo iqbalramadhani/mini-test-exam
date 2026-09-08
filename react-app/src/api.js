@@ -32,6 +32,7 @@ export const examApi = {
   del: (id) => request(`/exams/${id}`, { method: 'DELETE' }),
   listQuestions: (examId) => request(`/exams/${examId}/questions`),
   addQuestion: (examId, data) => request(`/exams/${examId}/questions`, { method: 'POST', body: JSON.stringify(data) }),
+  addQuestionsBulk: (examId, data) => request(`/exams/${examId}/questions/bulk`, { method: 'POST', body: JSON.stringify(data) }),
   updateQuestion: (examId, qId, data) => request(`/exams/${examId}/questions/${qId}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteQuestion: (examId, qId) => request(`/exams/${examId}/questions/${qId}`, { method: 'DELETE' }),
 }

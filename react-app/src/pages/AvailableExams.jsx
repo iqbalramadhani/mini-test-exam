@@ -72,12 +72,18 @@ export default function AvailableExams() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Link
-                      to={`/take/${exam.id}`}
-                      className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md transition font-medium"
-                    >
-                      Mulai Ujian
-                    </Link>
+                    {exam.question_count > 0 ? (
+                      <Link
+                        to={`/take/${exam.id}`}
+                        className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md transition font-medium"
+                      >
+                        Mulai Ujian
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-slate-400 border border-slate-200 px-3 py-1.5 rounded-md">
+                        Belum ada soal
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

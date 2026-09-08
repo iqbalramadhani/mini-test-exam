@@ -176,17 +176,34 @@ export default function ExamBuilder() {
     setParsedQuestions(questions)
   }
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (parsedQuestions.length === 0) return
-    setQuestions([
-      ...questions,
-      ...parsedQuestions.map((q) => ({ ...q, isNew: true })),
-    ])
-    setShowImport(false)
-    setImportText('')
-    setParsedQuestions([])
-    setParseError('')
-    setUnparsedLines([])
+    setSaving(true)
+    try {
+      const payload = {
+        questions: parsedQuestions.map((q) => ({
+          body: q.body,
+          correct_choice_index: q.correctChoiceIndex ?? 0,
+          question_type: 'choice',
+          explanation: q.explanation || '',
+          keterangan: '',
+          choices: (q.choices || []).filter((c) => typeof c === 'string' && c.trim()),
+        })),
+      }
+      const res = await examApi.addQuestionsBulk(id, payload)
+      const saved = res.question_ids.map((qid, i) => ({ ...parsedQuestions[i], id: qid }))
+      setQuestions([...questions, ...saved])
+      setShowImport(false)
+      setImportText('')
+      setParsedQuestions([])
+      setParseError('')
+      setUnparsedLines([])
+      Swal.fire({ icon: 'success', title: `${saved.length} soal berhasil disimpan`, toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true })
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Gagal menyimpan soal import', text: err.message, toast: true, position: 'top-end', showConfirmButton: false, timer: 4000, timerProgressBar: true })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleCloseImport = () => {
