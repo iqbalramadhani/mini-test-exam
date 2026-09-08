@@ -208,12 +208,14 @@ class ExamController
             $this->error('Minimal 2 pilihan jawaban');
         }
 
-        $stmt = $this->db->prepare("INSERT INTO question (exam_id, body, correct_choice_index, sort_order) VALUES (:eid, :body, :cci, :so)");
+        $stmt = $this->db->prepare("INSERT INTO question (exam_id, body, correct_choice_index, sort_order, question_type, explanation) VALUES (:eid, :body, :cci, :so, :qt, :exp)");
         $stmt->execute([
             ':eid' => $examId,
             ':body' => $question['body'],
             ':cci' => (int)($question['correct_choice_index'] ?? 0),
             ':so' => count($choices),
+            ':qt' => $question['question_type'] ?? 'choice',
+            ':exp' => $question['explanation'] ?? null,
         ]);
         $questionId = $this->db->lastInsertId();
 
@@ -246,10 +248,12 @@ class ExamController
         $question = $body['question'] ?? [];
         $choices = $body['choices'] ?? [];
 
-        $stmt = $this->db->prepare("UPDATE question SET body = :body, correct_choice_index = :cci WHERE id = :qid AND exam_id = :eid");
+        $stmt = $this->db->prepare("UPDATE question SET body = :body, correct_choice_index = :cci, question_type = :qt, explanation = :exp WHERE id = :qid AND exam_id = :eid");
         $stmt->execute([
             ':body' => $question['body'] ?? '',
             ':cci' => (int)($question['correct_choice_index'] ?? 0),
+            ':qt' => $question['question_type'] ?? 'choice',
+            ':exp' => $question['explanation'] ?? null,
             ':qid' => $questionId,
             ':eid' => $examId,
         ]);

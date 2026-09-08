@@ -37,10 +37,9 @@ try {
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     } else {
         $pdo = new PDO(
-            DB_TYPE . ':host=' . DB_HOST . ';charset=' . DB_CHARSET,
+            DB_TYPE . ':host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET,
             DB_USER, DB_PASS, $options
         );
-        $pdo->exec("CREATE DATABASE IF NOT EXISTS `" . addslashes(DB_NAME) . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     }
 
     require __DIR__ . '/../application/model/model.php';

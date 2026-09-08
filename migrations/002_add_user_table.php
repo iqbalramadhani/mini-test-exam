@@ -25,13 +25,16 @@ class AddUserTable
         $db->exec($runner->normalizeSql($sql));
 
         // Insert a demo admin account (password: admin123)
-        $stmt = $db->prepare("INSERT OR IGNORE INTO user (username, email, password_hash, role) VALUES (?, ?, ?, ?)");
-        $stmt->execute([
-            'admin',
-            'admin@example.com',
-            password_hash('admin123', PASSWORD_DEFAULT),
-            'admin'
-        ]);
+        $exists = $db->query("SELECT COUNT(*) FROM user WHERE username = 'admin'")->fetchColumn();
+        if (!$exists) {
+            $stmt = $db->prepare("INSERT INTO user (username, email, password_hash, role) VALUES (?, ?, ?, ?)");
+            $stmt->execute([
+                'admin',
+                'admin@example.com',
+                password_hash('admin123', PASSWORD_DEFAULT),
+                'admin'
+            ]);
+        }
     }
 
     public function down($db): void

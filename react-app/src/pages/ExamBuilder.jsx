@@ -33,6 +33,8 @@ export default function ExamBuilder() {
         body: '',
         correctChoiceIndex: 0,
         choices: ['', '', '', ''],
+        questionType: 'choice',
+        explanation: '',
         isNew: true,
       },
     ])
@@ -79,6 +81,8 @@ export default function ExamBuilder() {
           question: {
             body: q.body,
             correct_choice_index: q.correctChoiceIndex,
+            question_type: q.questionType || 'choice',
+            explanation: q.explanation || '',
           },
           choices: validChoices.map((text) => ({ text })),
         }
@@ -161,41 +165,63 @@ export default function ExamBuilder() {
                 </button>
               </div>
 
-              <textarea
-                value={q.body}
-                onChange={(e) => updateQuestion(qIndex, 'body', e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[80px]"
-                placeholder="Tulis pertanyaan di sini..."
-              />
-
-              <div className="mt-3 space-y-2">
-                {q.choices.map((choice, cIndex) => (
-                  <div key={cIndex} className="flex items-center gap-2">
-                    <button
-                      onClick={() => updateQuestion(qIndex, 'correctChoiceIndex', cIndex)}
-                      className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition shrink-0 ${
-                        q.correctChoiceIndex === cIndex
-                          ? 'border-green-500 bg-green-500 text-white'
-                          : 'border-slate-200 text-slate-400 hover:border-slate-400'
-                      }`}
-                      title="Jawaban benar"
-                    >
-                      {LABELS[cIndex]}
-                    </button>
-                    <input
-                      type="text"
-                      value={choice}
-                      onChange={(e) => updateChoice(qIndex, cIndex, e.target.value)}
-                      className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder={`Pilihan ${LABELS[cIndex]}`}
-                    />
-                  </div>
-                ))}
+              <div className="flex gap-3 mb-3">
+                <select
+                  value={q.questionType || 'choice'}
+                  onChange={(e) => updateQuestion(qIndex, 'questionType', e.target.value)}
+                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="choice">Single Choice</option>
+                  <option value="multiple">Multiple Choice</option>
+                  <option value="fill">Fill-in</option>
+                  <option value="essay">Essay</option>
+                </select>
+                <textarea
+                  value={q.body}
+                  onChange={(e) => updateQuestion(qIndex, 'body', e.target.value)}
+                  className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[80px]"
+                  placeholder="Tulis pertanyaan di sini..."
+                />
               </div>
 
-              <p className="text-xs text-slate-400 mt-2">
-                Klik huruf untuk tandai jawaban yang benar
-              </p>
+              {(q.questionType === 'choice' || q.questionType === 'multiple') && (
+                <>
+                  <div className="mt-3 space-y-2">
+                    {q.choices.map((choice, cIndex) => (
+                      <div key={cIndex} className="flex items-center gap-2">
+                        <button
+                          onClick={() => updateQuestion(qIndex, 'correctChoiceIndex', cIndex)}
+                          className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition shrink-0 ${
+                            q.correctChoiceIndex === cIndex
+                              ? 'border-green-500 bg-green-500 text-white'
+                              : 'border-slate-200 text-slate-400 hover:border-slate-400'
+                          }`}
+                          title="Jawaban benar"
+                        >
+                          {LABELS[cIndex]}
+                        </button>
+                        <input
+                          type="text"
+                          value={choice}
+                          onChange={(e) => updateChoice(qIndex, cIndex, e.target.value)}
+                          className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder={`Pilihan ${LABELS[cIndex]}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Klik huruf untuk tandai jawaban yang benar
+                  </p>
+                </>
+              )}
+
+              <textarea
+                value={q.explanation || ''}
+                onChange={(e) => updateQuestion(qIndex, 'explanation', e.target.value)}
+                className="w-full mt-3 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[60px]"
+                placeholder="Explanation (optional)..."
+              />
             </div>
           ))}
         </div>
