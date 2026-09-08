@@ -5,6 +5,9 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import ExamBuilder from './pages/ExamBuilder'
+import AvailableExams from './pages/AvailableExams'
+import TakeExam from './pages/TakeExam'
+import ExamResult from './pages/ExamResult'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -52,6 +55,30 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <ExamBuilder />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/exams"
+          element={
+            <ProtectedRoute>
+              <AvailableExams />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/take/:id"
+          element={
+            <ProtectedRoute>
+              <TakeExam />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/result/:attemptId"
+          element={
+            <ProtectedRoute>
+              <ExamResult />
             </ProtectedRoute>
           }
         />

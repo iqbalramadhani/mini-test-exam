@@ -35,3 +35,13 @@ export const examApi = {
   updateQuestion: (examId, qId, data) => request(`/exams/${examId}/questions/${qId}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteQuestion: (examId, qId) => request(`/exams/${examId}/questions/${qId}`, { method: 'DELETE' }),
 }
+
+export const attemptApi = {
+  listPublished: () => request('/attempts/published'),
+  start: (examId) => request(`/attempts/start/${examId}`, { method: 'POST' }),
+  submit: (attemptId, answers) => request(`/attempts/${attemptId}/submit`, {
+    method: 'POST',
+    body: JSON.stringify({ answers }),
+  }),
+  getResult: (attemptId) => request(`/attempts/${attemptId}`),
+}

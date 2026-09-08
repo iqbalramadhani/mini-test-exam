@@ -90,6 +90,28 @@ if (!$handled && $parts[0] === 'exams') {
     }
 }
 
+// --- attempt routes ---
+if (!$handled && $parts[0] === 'attempts') {
+    require APP . 'api/attempt.php';
+    $attempt = new AttemptController();
+
+    if (count($parts) === 2 && $parts[1] === 'published') {
+        if ($method === 'GET') { $handled = $attempt->published(); }
+        else { apiJsonError('Method not allowed', 405); }
+    } elseif (count($parts) === 3 && $parts[1] === 'start') {
+        if ($method === 'POST') { $handled = $attempt->start((int)$parts[2]); }
+        else { apiJsonError('Method not allowed', 405); }
+    } elseif (count($parts) === 3 && $parts[2] === 'submit') {
+        if ($method === 'POST') { $handled = $attempt->submit((int)$parts[1]); }
+        else { apiJsonError('Method not allowed', 405); }
+    } elseif (count($parts) === 2 && is_numeric($parts[1])) {
+        if ($method === 'GET') { $handled = $attempt->get((int)$parts[1]); }
+        else { apiJsonError('Method not allowed', 405); }
+    } else {
+        apiJsonError('Not found', 404);
+    }
+}
+
 if (!$handled) {
     apiJsonError('Not found', 404);
 }

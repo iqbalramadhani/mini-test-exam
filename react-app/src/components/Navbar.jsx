@@ -17,6 +17,12 @@ export default function Navbar() {
               Halo, <strong className="text-slate-800">{user.username}</strong>
             </span>
             <Link
+              to="/exams"
+              className="text-sm text-slate-600 hover:text-slate-900 transition"
+            >
+              Ujian
+            </Link>
+            <Link
               to="/dashboard"
               className="text-sm text-slate-600 hover:text-slate-900 transition"
             >

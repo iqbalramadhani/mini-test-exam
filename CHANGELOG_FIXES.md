@@ -1,5 +1,20 @@
 # CHANGELOG — Perbaikan & Fitur MINI
 
+## Fix #5 — Typo PEMBHASAN di Parser Import Soal
+**Tanggal:** 2026-09-08
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `react-app/src/pages/ExamBuilder.jsx` |
+| **Masalah** | Saat import soal via teks, pembahasan (explanation) tidak pernah tersimpan karena pencocokan baris "PEMBAHASAN:" gagal |
+| **Akar** | Ada typo penulisan: `startsWith('PEMBHASAN:')` dan regex `/^PEMBHASAN:\s*/i` — huruf A setelah B seharusnya ada dua (PEMBA**H**ASAN), tapi ditulis PEMB**H**ASAN (hilang satu 'A') |
+| **Fix** | Ganti `PEMBHASAN` → `PEMBAHASAN` di 2 tempat: check `startsWith()` (line 72) dan regex `line.replace()` (line 74) |
+| **Verifikasi** | Parser test dengan teks multi-soal + pembahasan → explanation terisi benar untuk setiap soal |
+| **Pelajaran** | Istilah bahasa Indonesia (pembahasan) sering lupa dikunci 'a' — selalu test parser dengan input bahasa asli, bukan English alias |
+| **Log Keyword** | `PEMBAHASAN`, `startsWith`, `parseQuestionsFromText` |
+| **Deploy** | `npm run build` → copy `dist/` ke `public/react-app/` |
+
 ## Fix #4 — Batch Question Import dari Teks (Modal Parse)
 **Tanggal:** 2026-09-08
 **Status:** ✅ LIVE

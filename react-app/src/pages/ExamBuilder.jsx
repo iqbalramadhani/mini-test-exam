@@ -69,12 +69,9 @@ export default function ExamBuilder() {
 
       if (upper === 'SOAL' || upper === 'NOMOR') continue
 
-      if (upper.startsWith('PEMBHASAN:')) {
-        if (current) {
-          finishQuestion()
-        }
+      if (upper.startsWith('PEMBAHASAN:')) {
         phase = 'explanation'
-        explanationLines = [line.replace(/^PEMBHASAN:\s*/i, '').trim()]
+        explanationLines = [line.replace(/^PEMBAHASAN:\s*/i, '').trim()]
         continue
       }
 
