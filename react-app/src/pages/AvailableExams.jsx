@@ -69,6 +69,8 @@ export default function AvailableExams() {
                       <span>{exam.question_count} soal</span>
                       <span>•</span>
                       <span>{exam.time_limit_minutes} menit</span>
+                      <span>•</span>
+                      <span>{exam.attempt_count ?? 0} peserta</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">

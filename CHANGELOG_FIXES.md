@@ -1,5 +1,20 @@
 # CHANGELOG — Perbaikan & Fitur MINI
 
+## Fix #12 — Jumlah Peserta (User Pernah Mengerjakan) di Halaman /exams
+**Tanggal:** 2026-09-09
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `application/api/attempt.php`, `react-app/src/pages/AvailableExams.jsx` |
+| **Masalah** | Halaman `/exams` tidak menampilkan berapa user yang sudah pernah mengerjakan tiap ujian |
+| **Akar** | Query `published()` hanya LEFT JOIN `question` untuk `question_count` — tidak join tabel `attempt` |
+| **Fix** | 1. Query tambah `LEFT JOIN attempt a ON a.exam_id = e.id` + `COUNT(DISTINCT a.user_id) as attempt_count`; ubah `COUNT(q.id)` → `COUNT(DISTINCT q.id)` agar tidak duplikat karena join ganda.<br>2. UI `AvailableExams.jsx` tampilkan `{exam.attempt_count} peserta` di baris info. |
+| **Verifikasi** | Buka `/exams` → tiap kartu ujian menampilkan "X peserta" di samping jumlah soal dan durasi |
+| **Pelajaran** | Saat menambah join baru ke query yang sudah ada aggregate, cek kolom COUNT lama — join ganda menyebabkan hitungan membengkak; gunakan COUNT(DISTINCT) |
+| **Log Keyword** | `attempt_count`, `COUNT(DISTINCT`, `published`, `AvailableExams` |
+| **Deploy** | `cd react-app && npm run build` → copy `dist/` ke `public/react-app/` |
+
 ## Fix #11 — Import Soal Pakai Satu Endpoint Bulk (Bukan Loop Per-Soal)
 **Tanggal:** 2026-09-09
 **Status:** ✅ LIVE

@@ -53,9 +53,11 @@ class AttemptController
 
         $stmt = $this->db->prepare("
             SELECT e.id, e.title, e.description, e.time_limit_minutes,
-                   COUNT(q.id) as question_count
+                   COUNT(DISTINCT q.id) as question_count,
+                   COUNT(DISTINCT a.user_id) as attempt_count
             FROM exam e
             LEFT JOIN question q ON q.exam_id = e.id
+            LEFT JOIN attempt a ON a.exam_id = e.id
             WHERE e.is_published = 1
             GROUP BY e.id
             ORDER BY e.created_at DESC
