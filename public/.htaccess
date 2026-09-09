@@ -9,7 +9,9 @@ RewriteRule ^ - [L]
 
 # Pass API routes to index.php
 RewriteCond %{REQUEST_URI} ^/api/
-RewriteRule ^ - [L]
+RewriteRule ^ index.php [L]
 
-# SPA fallback: serve React index.html for all other routes
+# Serve React SPA for all other non-file/non-dir requests
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ react-app/index.html [L]
