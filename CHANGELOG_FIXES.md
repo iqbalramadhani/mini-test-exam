@@ -1,5 +1,35 @@
 # CHANGELOG — Perbaikan & Fitur MINI
 
+## Fix #14 — Halaman Blank Putih Setelah Deploy
+**Tanggal:** 2026-09-09
+**Status:** 🔄 COMMIT & RE-DEPLOY
+
+| Item | Detail |
+|---|---|
+| **File** | `.github/workflows/deploy.yml` |
+| **Masalah** | Setelah deploy via FTP, halaman web kosong putih (blank page). React app tidak muncul, hanya `<div id="root"></div>`. |
+| **Akar** | `rsync` di workflow menggunakan `--exclude='react-app/'` yang menghilangkan SEMUA direktori bernama `react-app/`, termasuk `public/react-app/` — tempat build output Vite disimpan. `react_app.php` memanggil `file_exists(ROOT . 'public/react-app/index.html')` → `false` → hanya render `<div id="root"></div>`. |
+| **Fix** | 1. Ganti `--exclude='react-app/'` menjadi `--exclude='./react-app/'` (hanya root source dir).<br>2. Tambah `--exclude='/react-app/'` untuk memastikan public/react-app tidak ter-exclude. |
+| **Verifikasi** | Simulasi rsync: `public/react-app/index.html` dan `public/react-app/assets/*.js` ada di bundle setelah deploy. |
+| **Pelajaran** | `--exclude='react-app/'` di rsync menargetkan SEMUA path yang mengandung `react-app/` di manapun — termasuk `public/react-app/`. Gunakan path spesifik (`./` atau `/`) untuk eksklusi yang presisi. |
+| **Log Keyword** | `rsync`, `react-app/`, `public/react-app/`, `exclude`, `blank page` |
+| **Deploy** | `git add .github/workflows/deploy.yml && git commit -m "fix: rsync exclude react-app/ memblokir public/react-app/" && git push` |
+
+## Fix #13 — Migrasi API 404 di CI/CD
+**Tanggal:** 2026-09-09
+**Status:** 🔄 COMMIT & RE-DEPLOY
+
+| Item | Detail |
+|---|---|
+| **File** | `public/.htaccess` |
+| **Masalah** | CI/CD migration step gagal dengan `HTTP 404`. Response adalah halaman 404 default LiteSpeed, bukan dari aplikasi PHP. |
+| **Akar** | RewriteRule `^ index.php [L]` tanpa flag `QSA` (Query String Append) menyebabkan query string `?url=api/migration/run` hilang saat rewrite. `$_GET['url']` kosong → API router tidak bisa mengenali route `/api/migration/run` → 404. |
+| **Fix** | Tambah flag `QSA` pada rewrite rule: `RewriteRule ^ index.php [L,QSA]`. |
+| **Verifikasi** | Dengan QSA, request ke `/api/migration/run` di-rewrite ke `/index.php?url=api/migration/run` — query string tetap ada dan API router bisa memproses route dengan benar. |
+| **Pelajaran** | RewriteRule ke file PHP yang membaca query string HARUS pakai `[L,QSA]` agar parameter URL tidak hilang saat rewrite. |
+| **Log Keyword** | `QSA`, `RewriteRule`, `404`, `index.php`, `$_GET\['url'\]` |
+| **Deploy** | `git add public/.htaccess && git commit -m "fix: tambah QSA flag pada .htaccess untuk API routing" && git push` |
+
 ## Fix #12 — Jumlah Peserta (User Pernah Mengerjakan) di Halaman /exams
 **Tanggal:** 2026-09-09
 **Status:** ✅ LIVE
