@@ -122,7 +122,8 @@ class AttemptControllerTest extends TestCase
                 sort_order INTEGER NOT NULL DEFAULT 0,
                 question_type VARCHAR(20) NOT NULL DEFAULT 'choice',
                 explanation TEXT,
-                keterangan TEXT
+                keterangan TEXT,
+                weight INTEGER NOT NULL DEFAULT 1
             )
         ");
         $this->pdo->exec("
@@ -130,7 +131,8 @@ class AttemptControllerTest extends TestCase
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 question_id INTEGER NOT NULL,
                 label VARCHAR(2) NOT NULL,
-                text TEXT NOT NULL
+                text TEXT NOT NULL,
+                score INTEGER NOT NULL DEFAULT 0
             )
         ");
         $this->pdo->exec("
@@ -353,7 +355,7 @@ class AttemptControllerTest extends TestCase
 
         $this->assertEquals(200, $c->capturedStatus);
         $this->assertTrue($c->capturedResponse['success']);
-        $this->assertEquals(50.0, $c->capturedResponse['score']);
+        $this->assertEquals(1.0, (float) $c->capturedResponse['score']);
         $this->assertEquals(1, $c->capturedResponse['correct']);
         $this->assertEquals(2, $c->capturedResponse['total']);
     }
@@ -371,7 +373,7 @@ class AttemptControllerTest extends TestCase
         $c->setInput(['answers' => [['question_id' => $qId, 'selected_choice_index' => 0]]]);
         $this->call(fn() => $c->submit($attemptId));
 
-        $this->assertEquals(100.0, $c->capturedResponse['score']);
+        $this->assertEquals(1.0, (float) $c->capturedResponse['score']);
     }
 
     public function testSubmitAttemptAllWrongScores0(): void
@@ -507,7 +509,7 @@ class AttemptControllerTest extends TestCase
         $this->assertEquals(200, $c->capturedStatus);
         $this->assertArrayHasKey('attempt', $c->capturedResponse);
         $this->assertArrayHasKey('answers', $c->capturedResponse);
-        $this->assertEquals(100.0, $c->capturedResponse['attempt']['score']);
+        $this->assertEquals(1.0, (float) $c->capturedResponse['attempt']['score']);
     }
 
     public function testGetAttemptReturnsAnswersWithChoiceTexts(): void
@@ -571,7 +573,7 @@ class AttemptControllerTest extends TestCase
             ],
         ]);
         $this->call(fn() => $c->submit($attemptId));
-        $this->assertEquals(100.0, $c->capturedResponse['score']);
+        $this->assertEquals(2.0, (float) $c->capturedResponse['score']);
 
         $this->call(fn() => $c->get($attemptId));
 

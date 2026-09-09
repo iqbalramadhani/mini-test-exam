@@ -116,7 +116,8 @@ class ExamControllerTest extends TestCase
                 sort_order INTEGER NOT NULL DEFAULT 0,
                 question_type VARCHAR(20) NOT NULL DEFAULT 'choice',
                 explanation TEXT,
-                keterangan TEXT
+                keterangan TEXT,
+                weight INTEGER NOT NULL DEFAULT 1
             )
         ");
         $this->pdo->exec("
@@ -124,7 +125,8 @@ class ExamControllerTest extends TestCase
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 question_id INTEGER NOT NULL,
                 label VARCHAR(2) NOT NULL,
-                text TEXT NOT NULL
+                text TEXT NOT NULL,
+                score INTEGER NOT NULL DEFAULT 0
             )
         ");
 
