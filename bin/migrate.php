@@ -23,6 +23,7 @@ define('DB_NAME', getenv('DB_NAME') ?: 'mini');
 define('DB_USER', getenv('DB_USER') ?: 'root');
 define('DB_PASS', getenv('DB_PASS') ?: '');
 define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');
+define('DB_PORT', (int) (getenv('DB_PORT') ?: 3306));
 
 $options = [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -45,9 +46,10 @@ try {
         $pdo = new PDO($dsn);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     } else {
-        // Use 127.0.0.1 instead of localhost to force TCP (avoids missing-socket errors)
+        // Force TCP by using 127.0.0.1 for localhost, and append port if non-standard
         $tcpHost = (strtoupper(DB_HOST) === 'LOCALHOST') ? '127.0.0.1' : DB_HOST;
-        $testPdo = new PDO(DB_TYPE . ':host=' . $tcpHost, DB_USER, DB_PASS);
+        $portSuffix = (DB_PORT !== 3306) ? ':' . DB_PORT : '';
+        $testPdo = new PDO(DB_TYPE . ':host=' . $tcpHost . $portSuffix, DB_USER, DB_PASS);
         $charset = DB_CHARSET;
         foreach ([DB_CHARSET, 'utf8mb3', 'utf8'] as $candidate) {
             if (testCharset($testPdo, $candidate)) {
@@ -55,7 +57,7 @@ try {
                 break;
             }
         }
-        $dsn = DB_TYPE . ':host=' . $tcpHost . ';dbname=' . DB_NAME . ';charset=' . $charset;
+        $dsn = DB_TYPE . ':host=' . $tcpHost . $portSuffix . ';dbname=' . DB_NAME . ';charset=' . $charset;
         $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
     }
 

@@ -129,4 +129,5 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASS: ${{ secrets.DB_PASS }}
           DB_CHARSET: ${{ secrets.DB_CHARSET }}
+          DB_PORT: ${{ secrets.DB_PORT }}
         run: php bundle/bin/migrate.php migrate

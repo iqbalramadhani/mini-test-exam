@@ -60,3 +60,4 @@ if (!defined('DB_NAME')) define('DB_NAME', getenv('DB_NAME') ?: 'mini');
 if (!defined('DB_USER')) define('DB_USER', getenv('DB_USER') ?: 'root');
 if (!defined('DB_PASS')) define('DB_PASS', getenv('DB_PASS') ?: '');
 if (!defined('DB_CHARSET')) define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');
+if (!defined('DB_PORT')) define('DB_PORT', (int) (getenv('DB_PORT') ?: 3306));
