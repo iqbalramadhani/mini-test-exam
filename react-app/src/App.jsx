@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
@@ -13,6 +13,7 @@ import { ProtectedRoute } from './context/AuthContext'
 
 function AppRoutes() {
   const { user, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -22,9 +23,11 @@ function AppRoutes() {
     )
   }
 
+  const isTakeExam = location.pathname.startsWith('/take/')
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 text-slate-800">
-      <Navbar />
+      {!isTakeExam && <Navbar />}
       <Routes>
         <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" replace />} />

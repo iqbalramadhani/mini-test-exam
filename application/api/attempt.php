@@ -144,25 +144,65 @@ class AttemptController
             $this->error('Jawaban kosong', 400);
         }
 
-        $qStmt = $this->db->prepare("SELECT id, correct_choice_index FROM question WHERE exam_id = :eid");
+        $qStmt = $this->db->prepare("SELECT id, correct_choice_index, weight FROM question WHERE exam_id = :eid");
         $qStmt->execute([':eid' => $attempt->exam_id]);
         $questions = $qStmt->fetchAll();
         $correctMap = [];
+        $weightMap = [];
         foreach ($questions as $q) {
             $correctMap[$q->id] = (int)$q->correct_choice_index;
+            $weightMap[$q->id] = (int)$q->weight;
+        }
+
+        $cStmt = $this->db->prepare("SELECT c.question_id, c.score FROM choice c JOIN question q ON c.question_id = q.id WHERE q.exam_id = :eid ORDER BY c.id ASC");
+        $cStmt->execute([':eid' => $attempt->exam_id]);
+        $choices = $cStmt->fetchAll();
+        $choiceScores = [];
+        $currentQid = -1;
+        $idx = 0;
+        foreach ($choices as $c) {
+            if ($c->question_id !== $currentQid) {
+                $currentQid = $c->question_id;
+                $idx = 0;
+            }
+            $choiceScores[$c->question_id][$idx] = (int)$c->score;
+            $idx++;
         }
 
         $this->db->beginTransaction();
         try {
             $qCount = count($questions);
             $correctCount = 0;
+            $totalScore = 0;
 
             foreach ($answers as $ans) {
                 $qid = (int)$ans['question_id'];
                 $selected = (int)($ans['selected_choice_index'] ?? -1);
 
                 $isCorrect = ($selected === ($correctMap[$qid] ?? -1)) ? 1 : 0;
-                if ($isCorrect) $correctCount++;
+                
+                $earned = 0;
+                $hasChoiceScores = false;
+                if (isset($choiceScores[$qid])) {
+                    $maxChoiceScore = max($choiceScores[$qid]);
+                    if ($maxChoiceScore > 0) {
+                        $hasChoiceScores = true;
+                    }
+                }
+
+                if ($hasChoiceScores) {
+                    if ($selected >= 0 && isset($choiceScores[$qid][$selected])) {
+                        $earned = $choiceScores[$qid][$selected];
+                    }
+                    if ($earned > 0) $correctCount++; // For TKP, any positive score can count as 'correct' or partial correct
+                } else {
+                    if ($isCorrect) {
+                        $earned = $weightMap[$qid] ?? 1;
+                        $correctCount++;
+                    }
+                }
+
+                $totalScore += $earned;
 
                 $stmt = $this->db->prepare("INSERT INTO user_answer (attempt_id, question_id, selected_choice_index, is_correct) VALUES (:aid, :qid, :sci, :ic)");
                 $stmt->execute([
@@ -173,10 +213,8 @@ class AttemptController
                 ]);
             }
 
-            $score = $qCount > 0 ? round(($correctCount / $qCount) * 100, 2) : 0;
-
             $stmt = $this->db->prepare("UPDATE attempt SET finished_at = CURRENT_TIMESTAMP, score = :score WHERE id = :id");
-            $stmt->execute([':score' => $score, ':id' => $attemptId]);
+            $stmt->execute([':score' => $totalScore, ':id' => $attemptId]);
 
             $this->db->commit();
         } catch (Exception $e) {
@@ -186,7 +224,7 @@ class AttemptController
             $this->error('Gagal menyimpan jawaban');
         }
 
-        $this->respond(['success' => true, 'score' => $score, 'correct' => $correctCount, 'total' => $qCount]);
+        $this->respond(['success' => true, 'score' => $totalScore, 'correct' => $correctCount, 'total' => $qCount]);
     }
 
     public function get(int $attemptId): bool

@@ -234,11 +234,12 @@ class ExamController
         $labelMap = ['A', 'B', 'C', 'D', 'E', 'F'];
         foreach ($choices as $index => $choice) {
             $label = $labelMap[$index] ?? chr(65 + $index);
-            $stmt  = $this->db->prepare("INSERT INTO choice (question_id, label, text) VALUES (:qid, :label, :text)");
+            $stmt  = $this->db->prepare("INSERT INTO choice (question_id, label, text, score) VALUES (:qid, :label, :text, :score)");
             $stmt->execute([
                 ':qid'   => $questionId,
                 ':label' => $label,
                 ':text'  => trim($choice['text'] ?? ''),
+                ':score' => (int)($choice['score'] ?? 0),
             ]);
         }
 
@@ -268,7 +269,7 @@ class ExamController
             $labelMap = ['A', 'B', 'C', 'D', 'E', 'F'];
 
             $qStmt = $this->db->prepare("INSERT INTO question (exam_id, body, correct_choice_index, sort_order, question_type, explanation, keterangan, weight) VALUES (:eid, :body, :cci, :so, :qt, :exp, :ket, :weight)");
-            $cStmt = $this->db->prepare("INSERT INTO choice (question_id, label, text) VALUES (:qid, :label, :text)");
+            $cStmt = $this->db->prepare("INSERT INTO choice (question_id, label, text, score) VALUES (:qid, :label, :text, :score)");
 
             foreach ($questions as $q) {
                 $bodyText = trim($q['body'] ?? '');
@@ -292,10 +293,13 @@ class ExamController
 
                 foreach ($choices as $idx => $choice) {
                     $label = $labelMap[$idx] ?? chr(65 + $idx);
+                    $cText = is_string($choice) ? trim($choice) : trim($choice['text'] ?? '');
+                    $cScore = is_array($choice) ? (int)($choice['score'] ?? 0) : 0;
                     $cStmt->execute([
                         ':qid'   => $qid,
                         ':label' => $label,
-                        ':text'  => is_string($choice) ? trim($choice) : trim($choice['text'] ?? ''),
+                        ':text'  => $cText,
+                        ':score' => $cScore,
                     ]);
                 }
             }
@@ -342,11 +346,12 @@ class ExamController
         $labelMap = ['A', 'B', 'C', 'D', 'E', 'F'];
         foreach ($choices as $index => $choice) {
             $label = $labelMap[$index] ?? chr(65 + $index);
-            $stmt  = $this->db->prepare("INSERT INTO choice (question_id, label, text) VALUES (:qid, :label, :text)");
+            $stmt  = $this->db->prepare("INSERT INTO choice (question_id, label, text, score) VALUES (:qid, :label, :text, :score)");
             $stmt->execute([
                 ':qid'   => $questionId,
                 ':label' => $label,
                 ':text'  => trim($choice['text'] ?? ''),
+                ':score' => (int)($choice['score'] ?? 0),
             ]);
         }
 

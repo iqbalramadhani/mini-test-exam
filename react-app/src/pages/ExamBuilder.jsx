@@ -22,8 +22,8 @@ export default function ExamBuilder() {
   const LABELS = ['A', 'B', 'C', 'D', 'E', 'F']
 
   const padChoices = (choices) => {
-    const arr = choices.map((c) => c.trim()).filter(Boolean)
-    while (arr.length < 5) arr.push('')
+    const arr = choices.map((c) => (typeof c === 'string' ? { text: c.trim(), score: 0 } : c)).filter(c => c.text)
+    while (arr.length < 5) arr.push({ text: '', score: 0 })
     return arr
   }
 
@@ -57,10 +57,15 @@ export default function ExamBuilder() {
         .replace(/ANSWER/g, '')
       const answerIndex = answerLabel ? LABELS.indexOf(answerLabel) : 0
       if (answerIndex === -1) return
+      const formattedChoices = current.choices.map((c, i) => ({
+        text: c.trim(),
+        score: current.scores[LABELS[i]] || 0
+      })).filter(c => c.text)
+
       questions.push({
         body: current.body,
         correctChoiceIndex: answerIndex,
-        choices: padChoices(current.choices),
+        choices: padChoices(formattedChoices),
         explanation: explanationLines.join('\n').trim(),
         keterangan: '',
         weight: 1,
@@ -73,7 +78,7 @@ export default function ExamBuilder() {
 
       if (upper.startsWith('NOMOR') && upper.includes('SOAL:')) {
         finishQuestion()
-        current = { body: '', choices: [], answer: '' }
+        current = { body: '', choices: [], answer: '', scores: {} }
         explanationLines = []
         phase = 'question'
         current.body = line.replace(/^NOMOR\s*\d+\s*SOAL:\s*/i, '').trim()
@@ -82,7 +87,7 @@ export default function ExamBuilder() {
 
       if (upper.startsWith('SOAL:')) {
         finishQuestion()
-        current = { body: '', choices: [], answer: '' }
+        current = { body: '', choices: [], answer: '', scores: {} }
         explanationLines = []
         phase = 'question'
         current.body = line.replace(/^SOAL:\s*/i, '').trim()
@@ -91,13 +96,22 @@ export default function ExamBuilder() {
 
       if (/^NOMOR\s*\d+$/.test(upper)) {
         finishQuestion()
-        current = { body: '', choices: [], answer: '' }
+        current = { body: '', choices: [], answer: '', scores: {} }
         explanationLines = []
         phase = 'question'
         continue
       }
 
       if (upper === 'SOAL') continue
+
+      if (upper.startsWith('SKOR')) {
+        const scorePattern = /([A-F])\s*=\s*(\d+)/gi
+        let match
+        while ((match = scorePattern.exec(line)) !== null) {
+          if (current) current.scores[match[1].toUpperCase()] = parseInt(match[2])
+        }
+        continue
+      }
 
       if (upper.startsWith('PEMBAHASAN:')) {
         phase = 'explanation'
@@ -190,7 +204,7 @@ export default function ExamBuilder() {
           explanation: q.explanation || '',
           keterangan: '',
           weight: parseInt(q.weight) || 1,
-          choices: (q.choices || []).filter((c) => typeof c === 'string' && c.trim()),
+          choices: (q.choices || []).filter((c) => c.text && c.text.trim()),
         })),
       }
       const res = await examApi.addQuestionsBulk(id, payload)
@@ -225,8 +239,8 @@ export default function ExamBuilder() {
       .then(([examData, questionsData]) => {
         setExam(examData.exam)
         const normalized = (questionsData.questions || []).map((q) => {
-          const loadedChoices = q.choices.map((c) => c.text)
-          while (loadedChoices.length < 5) loadedChoices.push('')
+          const loadedChoices = q.choices.map((c) => ({ text: c.text, score: parseInt(c.score) || 0 }))
+          while (loadedChoices.length < 5) loadedChoices.push({ text: '', score: 0 })
           return {
             ...q,
             choices: loadedChoices,
@@ -248,7 +262,13 @@ export default function ExamBuilder() {
       {
         body: '',
         correctChoiceIndex: 0,
-        choices: ['', '', '', '', ''],
+        choices: [
+          { text: '', score: 0 },
+          { text: '', score: 0 },
+          { text: '', score: 0 },
+          { text: '', score: 0 },
+          { text: '', score: 0 },
+        ],
         explanation: '',
         keterangan: '',
         weight: 1,
@@ -264,10 +284,10 @@ export default function ExamBuilder() {
     setQuestions(updated)
   }
 
-  const updateChoice = (qIndex, cIndex, value) => {
+  const updateChoice = (qIndex, cIndex, field, value) => {
     const updated = [...questions]
     if (!updated[qIndex].choices) updated[qIndex].choices = []
-    updated[qIndex].choices[cIndex] = value
+    updated[qIndex].choices[cIndex][field] = value
     setQuestions(updated)
   }
 
@@ -291,13 +311,13 @@ export default function ExamBuilder() {
         choices: [],
       }
 
-      const validChoices = (q.choices || []).filter((c) => typeof c === 'string' && c.trim())
+      const validChoices = (q.choices || []).filter((c) => c.text && c.text.trim())
       if (validChoices.length < 2) {
         setSaving(false)
         Swal.fire({ icon: 'error', title: 'Validasi gagal', text: 'Minimal 2 pilihan jawaban', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true })
         return
       }
-      payload.choices = validChoices.map((text) => ({ text }))
+      payload.choices = validChoices.map((c) => ({ text: c.text, score: parseInt(c.score) || 0 }))
 
       if (q.id) {
         await examApi.updateQuestion(id, q.id, payload)
@@ -451,10 +471,18 @@ export default function ExamBuilder() {
                     </button>
                     <input
                       type="text"
-                      value={choice}
-                      onChange={(e) => updateChoice(qIndex, cIndex, e.target.value)}
+                      value={choice.text}
+                      onChange={(e) => updateChoice(qIndex, cIndex, 'text', e.target.value)}
                       className="flex-1 bg-white/50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                       placeholder={`Pilihan ${LABELS[cIndex]}`}
+                    />
+                    <input
+                      type="number"
+                      value={choice.score}
+                      onChange={(e) => updateChoice(qIndex, cIndex, 'score', parseInt(e.target.value) || 0)}
+                      className="w-16 bg-white/50 border border-slate-200 rounded-xl px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      placeholder="Skor"
+                      title="Skor jika memilih jawaban ini"
                     />
                   </div>
                 ))}
@@ -569,7 +597,8 @@ Pilihan Jawaban:
   C. Opsi ketiga
   D. Opsi keempat
   E. Opsi kelima
-Kunci Jawaban: A
+Skor A=1, B=2, C=5, D=3, E=4
+Kunci Jawaban: C
 Pembahasan: Penjelasan soal ini`}
                 </pre>
                 <textarea
@@ -613,7 +642,8 @@ Pembahasan: Penjelasan soal ini`}
                         <div className="space-y-0.5 text-slate-600">
                           {q.choices.map((c, ci) => (
                             <div key={ci} className={q.correctChoiceIndex === ci ? 'text-green-600 font-semibold flex items-start gap-1' : 'flex items-start gap-1'}>
-                              <span>{LABELS[ci]}.</span> <FormattedText>{c}</FormattedText>
+                              <span>{LABELS[ci]}.</span> <FormattedText>{c.text}</FormattedText>
+                              {c.score > 0 && <span className="text-xs ml-1 px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded-md">+{c.score}</span>}
                               {q.correctChoiceIndex === ci && <span> ✓</span>}
                             </div>
                           ))}
