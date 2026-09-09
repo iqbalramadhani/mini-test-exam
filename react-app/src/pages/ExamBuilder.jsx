@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { examApi } from '../api'
+import FormattedText from '../components/FormattedText'
 
 export default function ExamBuilder() {
   const { id } = useParams()
@@ -62,6 +63,7 @@ export default function ExamBuilder() {
         choices: padChoices(current.choices),
         explanation: explanationLines.join('\n').trim(),
         keterangan: '',
+        weight: 1,
       })
     }
 
@@ -187,6 +189,7 @@ export default function ExamBuilder() {
           question_type: 'choice',
           explanation: q.explanation || '',
           keterangan: '',
+          weight: parseInt(q.weight) || 1,
           choices: (q.choices || []).filter((c) => typeof c === 'string' && c.trim()),
         })),
       }
@@ -230,6 +233,7 @@ export default function ExamBuilder() {
             correctChoiceIndex: q.correct_choice_index ?? 0,
             explanation: q.explanation || '',
             keterangan: q.keterangan || '',
+            weight: q.weight ?? 1,
           }
         })
         setQuestions(normalized)
@@ -247,6 +251,7 @@ export default function ExamBuilder() {
         choices: ['', '', '', '', ''],
         explanation: '',
         keterangan: '',
+        weight: 1,
         isNew: true,
       },
     ])
@@ -281,6 +286,7 @@ export default function ExamBuilder() {
           question_type: 'choice',
           explanation: q.explanation || '',
           keterangan: q.keterangan || '',
+          weight: parseInt(q.weight) || 1,
         },
         choices: [],
       }
@@ -404,6 +410,19 @@ export default function ExamBuilder() {
                   >
                     Hapus
                   </button>
+                </div>
+              </div>
+
+              <div className="mb-4 flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-semibold text-slate-500">Bobot Nilai:</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={q.weight ?? 1}
+                    onChange={(e) => updateQuestion(qIndex, 'weight', parseInt(e.target.value) || 1)}
+                    className="w-20 bg-white/50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
                 </div>
               </div>
 
@@ -588,21 +607,21 @@ Pembahasan: Penjelasan soal ini`}
                   <div className="space-y-3 max-h-60 overflow-y-auto border border-slate-200 rounded-lg p-3 bg-slate-50">
                     {parsedQuestions.map((q, i) => (
                       <div key={i} className="bg-white rounded-lg border border-slate-200 p-3 text-sm">
-                        <p className="font-medium text-slate-800 mb-1">
-                          {i + 1}. {q.body}
-                        </p>
+                        <div className="font-medium text-slate-800 mb-1 flex items-start gap-1">
+                          <span>{i + 1}.</span> <FormattedText>{q.body}</FormattedText>
+                        </div>
                         <div className="space-y-0.5 text-slate-600">
                           {q.choices.map((c, ci) => (
-                            <p key={ci} className={q.correctChoiceIndex === ci ? 'text-green-600 font-semibold' : ''}>
-                              {LABELS[ci]}. {c}
-                              {q.correctChoiceIndex === ci && ' ✓'}
-                            </p>
+                            <div key={ci} className={q.correctChoiceIndex === ci ? 'text-green-600 font-semibold flex items-start gap-1' : 'flex items-start gap-1'}>
+                              <span>{LABELS[ci]}.</span> <FormattedText>{c}</FormattedText>
+                              {q.correctChoiceIndex === ci && <span> ✓</span>}
+                            </div>
                           ))}
                         </div>
                         {q.explanation && (
-                          <p className="text-xs text-slate-400 mt-1">
-                            Pembahasan: {q.explanation}
-                          </p>
+                          <div className="text-xs text-slate-400 mt-1 flex gap-1">
+                            <span>Pembahasan:</span> <FormattedText>{q.explanation}</FormattedText>
+                          </div>
                         )}
                       </div>
                     ))}

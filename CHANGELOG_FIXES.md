@@ -1,5 +1,35 @@
 # CHANGELOG — Perbaikan & Fitur MINI
 
+## Fix #16 — API Response 401 Unauthorized Setelah Login
+**Tanggal:** 2026-09-09
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `application/core/api_route.php` |
+| **Masalah** | Setelah berhasil membuat akun dan login, request API selanjutnya selalu merespons dengan `401 Unauthorized`. |
+| **Akar** | Fungsi `login()` pada `auth.php` memasukkan data ke `$_SESSION` tanpa memanggil `session_start()` terlebih dahulu. Akibatnya, PHP membuat session sementara tetapi tidak mengirim cookie `PHPSESSID` ke browser. Saat request berikutnya, browser tidak mengirim session ID, sehingga dianggap belum login. |
+| **Fix** | Tambahkan pemanggilan `session_start()` di bagian teratas file `api_route.php` untuk memastikan session selalu diinisialisasi sebelum route API apa pun ditangani. |
+| **Verifikasi** | Login sukses, cookie `PHPSESSID` terkirim dan disimpan di browser, request `/api/auth/me` berhasil mengembalikan data user (status 200). |
+| **Pelajaran** | Di PHP, variabel `$_SESSION` bisa diisi tanpa `session_start()`, tetapi perubahan tidak akan disimpan dan session cookie tidak akan dikirim ke client. Selalu pastikan `session_start()` dipanggil sebelum membaca atau memodifikasi session. |
+| **Log Keyword** | `401`, `Unauthorized`, `session_start()`, `PHPSESSID`, `api_route.php` |
+| **Deploy** | `git add application/core/api_route.php && git commit -m "fix: call session_start() in API router to persist auth state" && git push` |
+
+## Fix #15 — File `.htaccess` Tidak Terupload oleh GitHub Actions
+**Tanggal:** 2026-09-09
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `.github/workflows/deploy.yml` |
+| **Masalah** | Perubahan pada file `public/.htaccess` dan `public/.litespeed.conf` tidak mau terupload ke server saat deploy via GitHub Actions, menyebabkan migrasi API gagal karena endpoint merespons `404 Not Found`. |
+| **Akar** | `SamKirkland/FTP-Deploy-Action` menggunakan file cache state (`.ftp-deploy-sync-state.json`) untuk mendeteksi perubahan. Jika sinkronisasi sebelumnya gagal atau state corrupt, action ini menolak mengupload ulang file yang dianggap tidak berubah meskipun aslinya di server belum diperbarui. |
+| **Fix** | Menambahkan parameter `state-name: .ftp-deploy-sync-state-v2.json` pada konfigurasi FTP Deploy di `deploy.yml`. Ini memaksa GitHub Actions membuat state file baru dan melakukan full-sync (mengupload ulang semua file) secara aman tanpa menghapus file server seperti `.env` atau `*.db`. |
+| **Verifikasi** | File `.htaccess` berhasil terupload, rewrite rule berjalan, dan API migrasi berhasil merespons 200 OK. |
+| **Pelajaran** | Saat deployment state tersangkut, ubah nama file state untuk memicu *clean slate* yang aman dibanding menggunakan fitur berbahaya seperti `dangerous-clean-slate`. |
+| **Log Keyword** | `FTP-Deploy-Action`, `.htaccess`, `sync-state`, `404`, `state-name` |
+| **Deploy** | `git add .github/workflows/deploy.yml && git commit -m "fix: force full FTP sync by changing state file name to upload missing dotfiles" && git push` |
+
 ## Fix #14 — Halaman Blank Putih Setelah Deploy
 **Tanggal:** 2026-09-09
 **Status:** 🔄 COMMIT & RE-DEPLOY

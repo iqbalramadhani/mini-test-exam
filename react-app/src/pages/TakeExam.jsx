@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { attemptApi } from '../api'
+import FormattedText from '../components/FormattedText'
 
 const LABELS = ['A', 'B', 'C', 'D', 'E', 'F']
 
@@ -35,30 +36,7 @@ export default function TakeExam() {
       })
   }, [id])
 
-  useEffect(() => {
-    if (timeLeft === null || timeLeft <= 0 || submitted) return
 
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current)
-          handleAutoSubmit()
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timerRef.current)
-  }, [timeLeft, submitted, handleAutoSubmit])
-
-  const handleAutoSubmit = useCallback(async () => {
-    try {
-      await handleSubmit()
-    } catch {
-      navigate('/exams')
-    }
-  }, [handleSubmit, navigate])
 
   const handleSelectAnswer = (questionId, choiceIndex) => {
     setAnswers((prev) => ({ ...prev, [questionId]: choiceIndex }))
@@ -88,6 +66,33 @@ export default function TakeExam() {
       setSubmitted(false)
     }
   }, [submitted, questions, answers, attemptId, navigate])
+
+  const handleAutoSubmit = useCallback(async () => {
+    try {
+      await handleSubmit()
+    } catch {
+      navigate('/exams')
+    }
+  }, [handleSubmit, navigate])
+
+  useEffect(() => {
+    if (timeLeft === null || timeLeft <= 0 || submitted) return
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current)
+          handleAutoSubmit()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timerRef.current)
+  }, [timeLeft, submitted, handleAutoSubmit])
+
+
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60)
@@ -193,7 +198,7 @@ export default function TakeExam() {
                   <span className="bg-indigo-100 text-indigo-700 text-sm font-extrabold w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
                     {index + 1}
                   </span>
-                  <p className="text-slate-800 text-sm leading-relaxed pt-1.5">{q.body}</p>
+                  <FormattedText className="text-slate-800 text-sm leading-relaxed pt-1.5">{q.body}</FormattedText>
                 </div>
 
                 <div className="space-y-3 ml-12">
@@ -214,7 +219,7 @@ export default function TakeExam() {
                       }`}>
                         {LABELS[ci]}
                       </span>
-                      <span className="flex-1">{choice.text}</span>
+                      <span className="flex-1"><FormattedText>{choice.text}</FormattedText></span>
                       {answers[q.id] === ci && (
                         <svg className="w-5 h-5 text-indigo-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />

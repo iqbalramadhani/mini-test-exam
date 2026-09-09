@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { attemptApi } from '../api'
+import FormattedText from '../components/FormattedText'
 
 const LABELS = ['A', 'B', 'C', 'D', 'E', 'F']
 
@@ -112,7 +113,7 @@ export default function ExamResult() {
                 }`}>
                   {index + 1}
                 </span>
-                <p className="text-slate-800 text-sm leading-relaxed flex-1 pt-1.5 font-medium">{ans.question_body}</p>
+                <FormattedText className="text-slate-800 text-sm leading-relaxed flex-1 pt-1.5 font-medium">{ans.question_body}</FormattedText>
               </div>
 
               <div className="ml-12 space-y-2.5 text-sm">
@@ -120,21 +121,27 @@ export default function ExamResult() {
                   ans.is_correct === 1 ? 'bg-emerald-50/80 border-emerald-100 text-emerald-800' : 'bg-rose-50/80 border-rose-100 text-rose-800'
                 }`}>
                   <span className="font-bold opacity-80">Jawabanmu: </span>
-                  {ans.selected_choice_index >= 0
-                    ? `${LABELS[ans.selected_choice_index]}. ${ans.selected_text || '—'}`
-                    : '(Tidak dijawab)'}
+                  {ans.selected_choice_index >= 0 ? (
+                    <span className="inline-flex gap-1">
+                      {LABELS[ans.selected_choice_index]}. <FormattedText>{ans.selected_text || '—'}</FormattedText>
+                    </span>
+                  ) : (
+                    '(Tidak dijawab)'
+                  )}
                   <span className="ml-2 font-bold">{ans.is_correct === 1 ? '✓' : '✗'}</span>
                 </div>
                 {ans.is_correct === 0 && (
                   <div className="px-4 py-3 rounded-xl bg-emerald-50/80 border border-emerald-100 text-emerald-800">
                     <span className="font-bold opacity-80">Kunci Jawaban: </span>
-                    {LABELS[ans.correct_choice_index]}. {ans.correct_text || '—'}
+                    <span className="inline-flex gap-1">
+                      {LABELS[ans.correct_choice_index]}. <FormattedText>{ans.correct_text || '—'}</FormattedText>
+                    </span>
                   </div>
                 )}
                 {ans.explanation && (
                   <div className="mt-3 px-4 py-3 rounded-xl bg-indigo-50/50 border border-indigo-100/50 text-indigo-900 text-sm leading-relaxed">
                     <span className="font-bold text-indigo-700">Pembahasan: </span>
-                    {ans.explanation}
+                    <FormattedText>{ans.explanation}</FormattedText>
                   </div>
                 )}
               </div>
