@@ -121,6 +121,17 @@ if (!$handled && $parts[0] === 'attempts') {
     }
 }
 
+// --- migration routes (protected by X-Migration-Secret header) ---
+if (!$handled && $parts[0] === 'migration') {
+    require APP . 'api/migration.php';
+    $mig = new MigrationController();
+    if ($method === 'POST' && ($parts[1] ?? '') === 'run') {
+        $handled = $mig->run();
+    } else {
+        apiJsonError('Method not allowed', 405);
+    }
+}
+
 if (!$handled) {
     apiJsonError('Not found', 404);
 }

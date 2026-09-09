@@ -63,3 +63,26 @@ Set database type in `.env`:
 - `DB_TYPE=sqlite` + `DB_NAME=mini` (creates `mini.db` in project root)
 
 The migration runner auto-detects the driver via `PDO::ATTR_DRIVER_NAME`.
+
+## Production Deployment
+
+The GitHub Actions deploy job **uploads files via FTP only** — it cannot run migrations because the MySQL server is on `localhost` (internal to the hosting provider) and not reachable from GitHub's CI runners.
+
+**To run migrations after deploy, use one of these methods:**
+
+### Method 1: Via SSH (preferred)
+```bash
+ssh user@your-server 'cd /path/to/public && php bin/migrate.php migrate'
+```
+
+### Method 2: Via cPanel Terminal
+```bash
+cd /home/balewebi/domains/soal.bale.web.id/public_html
+php bin/migrate.php migrate
+```
+
+### Method 3: Via cPanel Cron Job
+Set up a daily cron to keep tables in sync:
+```
+0 2 * * * /usr/bin/php /home/balewebi/domains/soal.bale.web.id/public_html/bin/migrate.php migrate
+```

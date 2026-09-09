@@ -116,43 +116,20 @@ jobs:
             **/.DS_Store
             **/*.db
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.2"
-
-      - name: Check database connectivity
+      - name: Run database migrations via API
         env:
-          DB_TYPE: ${{ secrets.DB_TYPE }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASS: ${{ secrets.DB_PASS }}
-          DB_CHARSET: ${{ secrets.DB_CHARSET }}
-          DB_PORT: ${{ secrets.DB_PORT }}
+          MIGRATION_SECRET: ${{ secrets.MIGRATION_SECRET }}
+          APP_URL: ${{ secrets.APP_URL }}
         run: |
-          echo "DB_HOST=${{ secrets.DB_HOST }} DB_NAME=${{ secrets.DB_NAME }} DB_PORT=${{ secrets.DB_PORT }}"
-          php -r "
-            \$host = '${{ secrets.DB_HOST }}';
-            \$port = '${{ secrets.DB_PORT }}' ?: 3306;
-            if (\$host === '') { die(\"DB_HOST secret is empty\\n\"); }
-            echo \"Connecting to {\$host}:{\$port} ...\\n\";
-            \$conn = @fsockopen(\$host, (int)\$port, \$errno, \$errstr, 5);
-            if (\$conn) {
-              echo \"OK\\n\";
-              fclose(\$conn);
-            } else {
-              die(\"FAIL: {\$host}:{\$port} — {\$errstr} (errno: {\$errno})\\n\");
-            }
-          "
-
-      - name: Run database migrations
-        env:
-          DB_TYPE: ${{ secrets.DB_TYPE }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASS: ${{ secrets.DB_PASS }}
-          DB_CHARSET: ${{ secrets.DB_CHARSET }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-        run: php bundle/bin/migrate.php migrate
+          echo "Triggering migrations on ${APP_URL}/api/migration/run ..."
+          response=$(curl -s -w "\n%{http_code}" -X POST "${APP_URL}/api/migration/run" \
+            -H "Content-Type: application/json" \
+            -H "X-Migration-Secret: ${MIGRATION_SECRET}")
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | sed '$d')
+          echo "HTTP ${http_code}"
+          echo "Response: ${body}"
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Migration failed with HTTP ${http_code}"
+            exit 1
+          fi
