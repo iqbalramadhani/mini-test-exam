@@ -131,19 +131,18 @@ jobs:
           DB_CHARSET: ${{ secrets.DB_CHARSET }}
           DB_PORT: ${{ secrets.DB_PORT }}
         run: |
-          echo "DB_TYPE=$DB_TYPE DB_HOST=$DB_HOST DB_NAME=$DB_NAME DB_USER=$DB_USER DB_PORT=$DB_PORT"
-          # TCP connect test with PHP
+          echo "DB_HOST=${{ secrets.DB_HOST }} DB_NAME=${{ secrets.DB_NAME }} DB_PORT=${{ secrets.DB_PORT }}"
           php -r "
-            \$port = getenv('DB_PORT') ?: 3306;
-            \$host = getenv('DB_HOST');
-            echo \"Connecting to {$host}:{$port} ...\\n\";
+            \$host = '${{ secrets.DB_HOST }}';
+            \$port = '${{ secrets.DB_PORT }}' ?: 3306;
+            if (\$host === '') { die(\"DB_HOST secret is empty\\n\"); }
+            echo \"Connecting to {\$host}:{\$port} ...\\n\";
             \$conn = @fsockopen(\$host, (int)\$port, \$errno, \$errstr, 5);
             if (\$conn) {
-              echo \"OK: port {$port} is open\\n\";
+              echo \"OK\\n\";
               fclose(\$conn);
             } else {
-              echo \"FAIL: could not connect to {$host}:{$port} — {$errstr} (errno: {$errno})\\n\";
-              exit(1);
+              die(\"FAIL: {\$host}:{\$port} — {\$errstr} (errno: {\$errno})\\n\");
             }
           "
 
