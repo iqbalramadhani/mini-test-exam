@@ -20,7 +20,7 @@ export default function AvailableExams() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [user])
 
   if (loading) {
     return (

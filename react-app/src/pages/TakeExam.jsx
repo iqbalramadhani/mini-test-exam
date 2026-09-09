@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { attemptApi } from '../api'
@@ -50,21 +50,21 @@ export default function TakeExam() {
     }, 1000)
 
     return () => clearInterval(timerRef.current)
-  }, [timeLeft, submitted])
+  }, [timeLeft, submitted, handleAutoSubmit])
 
-  const handleAutoSubmit = async () => {
+  const handleAutoSubmit = useCallback(async () => {
     try {
       await handleSubmit()
     } catch {
       navigate('/exams')
     }
-  }
+  }, [handleSubmit, navigate])
 
   const handleSelectAnswer = (questionId, choiceIndex) => {
     setAnswers((prev) => ({ ...prev, [questionId]: choiceIndex }))
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (submitted) return
     setSubmitted(true)
 
@@ -87,7 +87,7 @@ export default function TakeExam() {
       setError(err.message)
       setSubmitted(false)
     }
-  }
+  }, [submitted, questions, answers, attemptId, navigate])
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60)

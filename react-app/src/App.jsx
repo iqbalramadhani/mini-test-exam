@@ -9,21 +9,7 @@ import AvailableExams from './pages/AvailableExams'
 import TakeExam from './pages/TakeExam'
 import ExamResult from './pages/ExamResult'
 import Profile from './pages/Profile'
-
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
-        <div className="text-slate-400">Memuat...</div>
-      </div>
-    )
-  }
-  if (!user) {
-    return <Navigate to="/login" replace />
-  }
-  return children
-}
+import { ProtectedRoute } from './context/AuthContext'
 
 function AppRoutes() {
   const { user, loading } = useAuth()

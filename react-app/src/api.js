@@ -1,7 +1,6 @@
 const API = '/api'
 
 async function request(endpoint, options = {}) {
-  const token = sessionStorage.getItem('token')
   const res = await fetch(API + endpoint, {
     ...options,
     headers: {

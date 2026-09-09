@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { Navigate } from 'react-router-dom'
 import { authApi } from '../api'
 
 const AuthContext = createContext(null)
@@ -50,4 +51,19 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   return useContext(AuthContext)
+}
+
+export function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="text-slate-400">Memuat...</div>
+      </div>
+    )
+  }
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+  return children
 }
