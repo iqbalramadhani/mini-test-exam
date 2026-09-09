@@ -113,6 +113,7 @@ jobs:
           server-dir: ${{ secrets.FTP_SERVER_DIR || '/' }}
           protocol: ftps
           port: 21
+          state-name: .ftp-deploy-sync-state-v2.json
           exclude: |
             **/.DS_Store
             **/*.db
