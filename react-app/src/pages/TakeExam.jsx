@@ -19,6 +19,7 @@ export default function TakeExam() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
 
   useEffect(() => {
     attemptApi.start(parseInt(id))
@@ -168,13 +169,15 @@ export default function TakeExam() {
                 {questions.map((q, i) => (
                   <button
                     key={q.id}
-                    onClick={() => {
-                      document.getElementById(`question-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    }}
+                    onClick={() => setCurrentQuestionIndex(i)}
                     className={`w-10 h-10 shrink-0 snap-center rounded-xl text-xs font-bold transition-all flex items-center justify-center ${
                       answers[q.id] !== undefined
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                        : 'bg-white border border-slate-200 text-slate-500 hover:border-indigo-300'
+                        ? currentQuestionIndex === i
+                          ? 'bg-indigo-700 text-white shadow-md shadow-indigo-300 ring-2 ring-indigo-200 ring-offset-1'
+                          : 'bg-indigo-500 text-white shadow-sm'
+                        : currentQuestionIndex === i
+                          ? 'bg-white border-2 border-indigo-400 text-indigo-600 shadow-sm'
+                          : 'bg-white border border-slate-200 text-slate-500 hover:border-indigo-300'
                     }`}
                   >
                     {i + 1}
@@ -191,13 +194,15 @@ export default function TakeExam() {
                 {questions.map((q, i) => (
                   <button
                     key={q.id}
-                    onClick={() => {
-                      document.getElementById(`question-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    }}
+                    onClick={() => setCurrentQuestionIndex(i)}
                     className={`aspect-square flex items-center justify-center rounded-xl text-xs font-bold transition-all ${
                       answers[q.id] !== undefined
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                        : 'bg-white border border-slate-200 text-slate-500 hover:border-indigo-300'
+                        ? currentQuestionIndex === i
+                          ? 'bg-indigo-700 text-white shadow-md shadow-indigo-300 ring-2 ring-indigo-200 ring-offset-1'
+                          : 'bg-indigo-500 text-white shadow-sm'
+                        : currentQuestionIndex === i
+                          ? 'bg-white border-2 border-indigo-400 text-indigo-600 shadow-sm'
+                          : 'bg-white border border-slate-200 text-slate-500 hover:border-indigo-300'
                     }`}
                   >
                     {i + 1}
@@ -212,38 +217,41 @@ export default function TakeExam() {
           </div>
 
           <div className="flex-1 space-y-6">
-            {questions.map((q, index) => (
+            {questions.length > 0 && (() => {
+              const q = questions[currentQuestionIndex]
+              return (
               <div
                 key={q.id}
-                id={`question-${q.id}`}
-                className="bg-white/80 backdrop-blur-lg rounded-2xl border border-white p-6 shadow-sm"
+                className="bg-white/80 backdrop-blur-lg rounded-2xl border border-white p-6 shadow-sm min-h-[400px] flex flex-col"
               >
-                <div className="flex items-start gap-4 mb-5">
-                  <span className="bg-indigo-100 text-indigo-700 text-sm font-extrabold w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
-                    {index + 1}
+                <div className="flex items-start gap-4 mb-6">
+                  <span className="bg-indigo-100 text-indigo-700 text-sm font-extrabold w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+                    {currentQuestionIndex + 1}
                   </span>
-                  <FormattedText className="text-slate-800 text-sm leading-relaxed pt-1.5">{q.body}</FormattedText>
+                  <div className="flex-1 pt-1.5">
+                    <FormattedText className="text-slate-800 text-[15px] leading-relaxed">{q.body}</FormattedText>
+                  </div>
                 </div>
 
-                <div className="space-y-3 ml-12">
+                <div className="space-y-3 ml-13 mb-8 flex-1 pl-1">
                   {q.choices?.map((choice, ci) => (
                     <button
                       key={choice.id}
                       onClick={() => handleSelectAnswer(q.id, ci)}
-                      className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl border text-sm text-left transition-all ${
+                      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border text-sm text-left transition-all ${
                         answers[q.id] === ci
-                          ? 'border-indigo-500 bg-indigo-50 text-indigo-800 shadow-sm'
+                          ? 'border-indigo-500 bg-indigo-50/80 text-indigo-800 shadow-sm ring-1 ring-indigo-200'
                           : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm text-slate-700'
                       }`}
                     >
                       <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
                         answers[q.id] === ci
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'bg-slate-100 text-slate-500 border border-slate-200'
                       }`}>
                         {LABELS[ci]}
                       </span>
-                      <span className="flex-1"><FormattedText>{choice.text}</FormattedText></span>
+                      <span className="flex-1 text-[15px]"><FormattedText>{choice.text}</FormattedText></span>
                       {answers[q.id] === ci && (
                         <svg className="w-5 h-5 text-indigo-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -252,32 +260,51 @@ export default function TakeExam() {
                     </button>
                   ))}
                 </div>
-              </div>
-            ))}
 
-            <div className="flex justify-end pt-4 pb-8">
-              <button
-                onClick={() => {
-                  const unanswered = questions.filter((q) => answers[q.id] === undefined).length
-                  Swal.fire({
-                    title: 'Kumpulkan Jawaban?',
-                    text: unanswered > 0
-                      ? `Masih ada ${unanswered} soal belum dijawab.`
-                      : 'Yakin ingin mengumpulkan jawaban?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Ya, Kumpulkan',
-                    cancelButtonText: 'Lanjut Ujian',
-                    confirmButtonColor: '#4f46e5',
-                  }).then((result) => {
-                    if (result.isConfirmed) handleSubmit()
-                  })
-                }}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-medium px-8 py-3 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all"
-              >
-                Kumpulkan Jawaban
-              </button>
-            </div>
+                {/* Pagination Controls */}
+                <div className="flex items-center justify-between border-t border-slate-100 pt-6 mt-auto">
+                  <button
+                    onClick={() => setCurrentQuestionIndex(p => Math.max(0, p - 1))}
+                    disabled={currentQuestionIndex === 0}
+                    className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    ← Sebelumnya
+                  </button>
+                  
+                  {currentQuestionIndex < questions.length - 1 ? (
+                    <button
+                      onClick={() => setCurrentQuestionIndex(p => Math.min(questions.length - 1, p + 1))}
+                      className="px-6 py-2.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 hover:bg-indigo-100 text-sm font-bold transition"
+                    >
+                      Selanjutnya →
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        const unanswered = questions.filter((qu) => answers[qu.id] === undefined).length
+                        Swal.fire({
+                          title: 'Kumpulkan Jawaban?',
+                          text: unanswered > 0
+                            ? `Masih ada ${unanswered} soal belum dijawab.`
+                            : 'Yakin ingin mengumpulkan jawaban?',
+                          icon: 'warning',
+                          showCancelButton: true,
+                          confirmButtonText: 'Ya, Kumpulkan',
+                          cancelButtonText: 'Lanjut Ujian',
+                          confirmButtonColor: '#4f46e5',
+                        }).then((result) => {
+                          if (result.isConfirmed) handleSubmit()
+                        })
+                      }}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold px-8 py-2.5 rounded-xl shadow-md transition-all"
+                    >
+                      Kumpulkan Jawaban
+                    </button>
+                  )}
+                </div>
+              </div>
+              )
+            })()}
           </div>
         </div>
       </div>
