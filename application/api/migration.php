@@ -1,6 +1,8 @@
 <?php
 
-require APP . 'libs/env.php';
+if (!function_exists('loadDotEnv')) {
+    require APP . 'libs/env.php';
+}
 
 $migrationSecret = getenv('MIGRATION_SECRET') ?: ($_SERVER['MIGRATION_SECRET'] ?? '');
 
