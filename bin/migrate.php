@@ -29,17 +29,33 @@ $options = [
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
 ];
 
+// Test charset support and fallback to utf8 if unavailable
+function testCharset(PDO $pdo, string $charset): bool {
+    try {
+        $pdo->exec("SET NAMES '{$charset}'");
+        return true;
+    } catch (PDOException $e) {
+        return false;
+    }
+}
+
 try {
-    // Build DSN — SQLite needs a file path, not host/db params
     if (strtoupper(DB_TYPE) === 'SQLITE') {
         $dsn = 'sqlite:' . __DIR__ . '/../' . DB_NAME . '.db';
         $pdo = new PDO($dsn);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     } else {
-        $pdo = new PDO(
-            DB_TYPE . ':host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET,
-            DB_USER, DB_PASS, $options
-        );
+        $testPdo = new PDO(DB_TYPE . ':host=' . DB_HOST, DB_USER, DB_PASS);
+        foreach ([DB_CHARSET, 'utf8mb3', 'utf8'] as $candidate) {
+            if (testCharset($testPdo, $candidate)) {
+                $charset = $candidate;
+                break;
+            }
+        }
+        $dsn = DB_TYPE . ':host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . $charset;
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+        $dsn = DB_TYPE . ':host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . $charset;
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
     }
 
     require __DIR__ . '/../application/model/model.php';

@@ -27,6 +27,8 @@ class MigrationRunner
         $sql = preg_replace('/\s*ENGINE=\w+\s*/i', ' ', $sql);
         $sql = preg_replace('/\s*DEFAULT\s+CHARSET=\w+/i', ' ', $sql);
         $sql = preg_replace('/\s*COLLATE=\w+/i', ' ', $sql);
+        // Strip utf8mb4 references — some servers only support utf8
+        $sql = str_ireplace('utf8mb4', 'utf8', $sql);
 
         // SQLite does not support ON UPDATE CURRENT_TIMESTAMP
         $sql = preg_replace('/\s*ON\s+UPDATE\s+CURRENT_TIMESTAMP\b/i', '', $sql);
