@@ -1,7 +1,6 @@
 <?php
 
-session_start();
-
+if (!function_exists('getDbConnection')) {
 function getDbConnection()
 {
     require APP . 'config/config.php';
@@ -22,17 +21,27 @@ function getDbConnection()
         $options
     );
 }
+}
 
 class ExamController
 {
-    private $db;
+    protected $db;
 
     public function __construct()
     {
         $this->db = getDbConnection();
     }
 
-    private function requireAuth(): void
+    /**
+     * Read and decode the JSON request body.
+     * Override in subclasses (e.g. testable versions) to inject fake input.
+     */
+    protected function getJsonInput(): array
+    {
+        return json_decode(file_get_contents('php://input'), true) ?? [];
+    }
+
+    protected function requireAuth(): void
     {
         if (!isset($_SESSION['user_id'])) {
             http_response_code(401);
@@ -42,7 +51,7 @@ class ExamController
         }
     }
 
-    private function respond(mixed $data, int $status = 200): never
+    protected function respond(mixed $data, int $status = 200): never
     {
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
@@ -50,7 +59,7 @@ class ExamController
         exit;
     }
 
-    private function error(string $message, int $status = 400): never
+    protected function error(string $message, int $status = 400): never
     {
         $this->respond(['error' => $message], $status);
     }
@@ -100,11 +109,11 @@ class ExamController
     public function create(): bool
     {
         $this->requireAuth();
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $body = $this->getJsonInput();
 
-        $title = trim($body['title'] ?? '');
+        $title       = trim($body['title'] ?? '');
         $description = trim($body['description'] ?? '');
-        $timeLimit = (int) ($body['time_limit_minutes'] ?? 60);
+        $timeLimit   = (int) ($body['time_limit_minutes'] ?? 60);
 
         if (strlen($title) < 1) {
             $this->error('Judul ujian wajib diisi');
@@ -115,9 +124,9 @@ class ExamController
 
         $stmt = $this->db->prepare("INSERT INTO exam (title, description, time_limit_minutes, created_by) VALUES (:t, :d, :tl, :uid)");
         $stmt->execute([
-            ':t' => $title,
-            ':d' => $description,
-            ':tl' => $timeLimit,
+            ':t'   => $title,
+            ':d'   => $description,
+            ':tl'  => $timeLimit,
             ':uid' => $_SESSION['user_id'],
         ]);
         $examId = $this->db->lastInsertId();
@@ -128,7 +137,7 @@ class ExamController
     public function update(int $id): bool
     {
         $this->requireAuth();
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $body = $this->getJsonInput();
 
         $stmt = $this->db->prepare("SELECT id FROM exam WHERE id = :id AND created_by = :uid");
         $stmt->execute([':id' => $id, ':uid' => $_SESSION['user_id']]);
@@ -136,17 +145,17 @@ class ExamController
             $this->error('Ujian tidak ditemukan', 404);
         }
 
-        $title = trim($body['title'] ?? '');
+        $title       = trim($body['title'] ?? '');
         $description = trim($body['description'] ?? '');
-        $timeLimit = (int) ($body['time_limit_minutes'] ?? 60);
+        $timeLimit   = (int) ($body['time_limit_minutes'] ?? 60);
         $isPublished = isset($body['is_published']) ? (int)$body['is_published'] : 0;
 
         $stmt = $this->db->prepare("UPDATE exam SET title = :t, description = :d, time_limit_minutes = :tl, is_published = :p WHERE id = :id");
         $stmt->execute([
-            ':t' => $title,
-            ':d' => $description,
+            ':t'  => $title,
+            ':d'  => $description,
             ':tl' => $timeLimit,
-            ':p' => $isPublished,
+            ':p'  => $isPublished,
             ':id' => $id,
         ]);
 
@@ -190,7 +199,7 @@ class ExamController
     public function storeQuestion(int $examId): bool
     {
         $this->requireAuth();
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $body = $this->getJsonInput();
 
         $stmt = $this->db->prepare("SELECT id FROM exam WHERE id = :id");
         $stmt->execute([':id' => $examId]);
@@ -199,7 +208,7 @@ class ExamController
         }
 
         $question = $body['question'] ?? [];
-        $choices = $body['choices'] ?? [];
+        $choices  = $body['choices'] ?? [];
 
         if (empty($question['body'])) {
             $this->error('Isi pertanyaan wajib diisi');
@@ -211,24 +220,24 @@ class ExamController
 
         $stmt = $this->db->prepare("INSERT INTO question (exam_id, body, correct_choice_index, sort_order, question_type, explanation, keterangan) VALUES (:eid, :body, :cci, :so, :qt, :exp, :ket)");
         $stmt->execute([
-            ':eid' => $examId,
+            ':eid'  => $examId,
             ':body' => $question['body'],
-            ':cci' => (int)($question['correct_choice_index'] ?? 0),
-            ':so' => count($choices),
-            ':qt' => $question['question_type'] ?? 'choice',
-            ':exp' => $question['explanation'] ?? null,
-            ':ket' => $question['keterangan'] ?? null,
+            ':cci'  => (int)($question['correct_choice_index'] ?? 0),
+            ':so'   => count($choices),
+            ':qt'   => $question['question_type'] ?? 'choice',
+            ':exp'  => $question['explanation'] ?? null,
+            ':ket'  => $question['keterangan'] ?? null,
         ]);
         $questionId = $this->db->lastInsertId();
 
         $labelMap = ['A', 'B', 'C', 'D', 'E', 'F'];
         foreach ($choices as $index => $choice) {
             $label = $labelMap[$index] ?? chr(65 + $index);
-            $stmt = $this->db->prepare("INSERT INTO choice (question_id, label, text) VALUES (:qid, :label, :text)");
+            $stmt  = $this->db->prepare("INSERT INTO choice (question_id, label, text) VALUES (:qid, :label, :text)");
             $stmt->execute([
-                ':qid' => $questionId,
+                ':qid'   => $questionId,
                 ':label' => $label,
-                ':text' => trim($choice['text'] ?? ''),
+                ':text'  => trim($choice['text'] ?? ''),
             ]);
         }
 
@@ -245,7 +254,7 @@ class ExamController
             $this->error('Ujian tidak ditemukan', 404);
         }
 
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $body      = $this->getJsonInput();
         $questions = $body['questions'] ?? [];
 
         if (!is_array($questions) || empty($questions)) {
@@ -254,7 +263,7 @@ class ExamController
 
         $this->db->beginTransaction();
         try {
-            $ids = [];
+            $ids      = [];
             $labelMap = ['A', 'B', 'C', 'D', 'E', 'F'];
 
             $qStmt = $this->db->prepare("INSERT INTO question (exam_id, body, correct_choice_index, sort_order, question_type, explanation, keterangan) VALUES (:eid, :body, :cci, :so, :qt, :exp, :ket)");
@@ -268,39 +277,42 @@ class ExamController
                 if (count($choices) < 2) continue;
 
                 $qStmt->execute([
-                    ':eid' => $examId,
+                    ':eid'  => $examId,
                     ':body' => $bodyText,
-                    ':cci' => (int)($q['correctChoiceIndex'] ?? $q['correct_choice_index'] ?? 0),
-                    ':so' => count($choices),
-                    ':qt' => $q['question_type'] ?? 'choice',
-                    ':exp' => $q['explanation'] ?? null,
-                    ':ket' => $q['keterangan'] ?? null,
+                    ':cci'  => (int)($q['correctChoiceIndex'] ?? $q['correct_choice_index'] ?? 0),
+                    ':so'   => count($choices),
+                    ':qt'   => $q['question_type'] ?? 'choice',
+                    ':exp'  => $q['explanation'] ?? null,
+                    ':ket'  => $q['keterangan'] ?? null,
                 ]);
-                $qid = (int)$this->db->lastInsertId();
-                $ids[] = $qid;
+                $qid    = (int)$this->db->lastInsertId();
+                $ids[]  = $qid;
 
                 foreach ($choices as $idx => $choice) {
                     $label = $labelMap[$idx] ?? chr(65 + $idx);
                     $cStmt->execute([
-                        ':qid' => $qid,
+                        ':qid'   => $qid,
                         ':label' => $label,
-                        ':text' => is_string($choice) ? trim($choice) : trim($choice['text'] ?? ''),
+                        ':text'  => is_string($choice) ? trim($choice) : trim($choice['text'] ?? ''),
                     ]);
                 }
             }
 
             $this->db->commit();
-            $this->respond(['success' => true, 'question_ids' => $ids, 'count' => count($ids)], 201);
         } catch (Exception $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             $this->error('Gagal menyimpan soal');
         }
+
+        $this->respond(['success' => true, 'question_ids' => $ids, 'count' => count($ids)], 201);
     }
 
     public function updateQuestion(int $examId, int $questionId): bool
     {
         $this->requireAuth();
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $body = $this->getJsonInput();
 
         $stmt = $this->db->prepare("SELECT id FROM question WHERE id = :qid AND exam_id = :eid");
         $stmt->execute([':qid' => $questionId, ':eid' => $examId]);
@@ -308,19 +320,18 @@ class ExamController
             $this->error('Soal tidak ditemukan', 404);
         }
 
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
         $question = $body['question'] ?? [];
-        $choices = $body['choices'] ?? [];
+        $choices  = $body['choices'] ?? [];
 
         $stmt = $this->db->prepare("UPDATE question SET body = :body, correct_choice_index = :cci, question_type = :qt, explanation = :exp, keterangan = :ket WHERE id = :qid AND exam_id = :eid");
         $stmt->execute([
             ':body' => $question['body'] ?? '',
-            ':cci' => (int)($question['correct_choice_index'] ?? 0),
-            ':qt' => $question['question_type'] ?? 'choice',
-            ':exp' => $question['explanation'] ?? null,
-            ':ket' => $question['keterangan'] ?? null,
-            ':qid' => $questionId,
-            ':eid' => $examId,
+            ':cci'  => (int)($question['correct_choice_index'] ?? 0),
+            ':qt'   => $question['question_type'] ?? 'choice',
+            ':exp'  => $question['explanation'] ?? null,
+            ':ket'  => $question['keterangan'] ?? null,
+            ':qid'  => $questionId,
+            ':eid'  => $examId,
         ]);
 
         $this->db->prepare("DELETE FROM choice WHERE question_id = :qid")->execute([':qid' => $questionId]);
@@ -328,11 +339,11 @@ class ExamController
         $labelMap = ['A', 'B', 'C', 'D', 'E', 'F'];
         foreach ($choices as $index => $choice) {
             $label = $labelMap[$index] ?? chr(65 + $index);
-            $stmt = $this->db->prepare("INSERT INTO choice (question_id, label, text) VALUES (:qid, :label, :text)");
+            $stmt  = $this->db->prepare("INSERT INTO choice (question_id, label, text) VALUES (:qid, :label, :text)");
             $stmt->execute([
-                ':qid' => $questionId,
+                ':qid'   => $questionId,
                 ':label' => $label,
-                ':text' => trim($choice['text'] ?? ''),
+                ':text'  => trim($choice['text'] ?? ''),
             ]);
         }
 

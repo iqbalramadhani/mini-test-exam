@@ -18,5 +18,52 @@ if (!defined('URL')) define('URL', 'http://localhost/');
 if (!defined('ENVIRONMENT')) define('ENVIRONMENT', 'testing');
 
 // Load classes needed for tests
+require_once APP . 'libs/env.php';
+require_once APP . 'libs/helper.php';
 require_once APP . 'libs/security.php';
 require_once APP . 'model/model.php';
+
+// Load ResponseCapturedException FIRST — it is used by stubs below and by TestableControllers
+require_once __DIR__ . '/Unit/ResponseCapturedException.php';
+
+// Stub global API helper functions that are normally defined in api_route.php.
+// These stubs integrate with the testable controller exception mechanism.
+if (!function_exists('apiJsonError')) {
+    function apiJsonError(string $message, int $status = 400): never
+    {
+        throw new \Tests\Unit\ResponseCapturedException(['error' => $message], $status);
+    }
+}
+
+if (!function_exists('apiRespond')) {
+    function apiRespond(mixed $data, int $status = 200): never
+    {
+        throw new \Tests\Unit\ResponseCapturedException($data, $status);
+    }
+}
+
+if (!function_exists('requireAuth')) {
+    function requireAuth(): void
+    {
+        if (!\Security::isLoggedIn()) {
+            throw new \Tests\Unit\ResponseCapturedException(['error' => 'Unauthorized'], 401);
+        }
+    }
+}
+
+if (!function_exists('getJsonBody')) {
+    function getJsonBody(): array|false
+    {
+        $input = file_get_contents('php://input');
+        $decoded = json_decode($input, true);
+        return $decoded ?? [];
+    }
+}
+
+// Each API file defines getDbConnection() — guard against redeclaration
+require_once APP . 'api/auth.php';
+require APP . 'api/exams.php';
+require APP . 'api/attempt.php';
+
+// Load testable controller subclasses
+require_once __DIR__ . '/Unit/TestableControllers.php';

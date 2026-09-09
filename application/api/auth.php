@@ -1,13 +1,12 @@
 <?php
 
-session_start();
-
+if (!function_exists('getDbConnection')) {
 function getDbConnection()
 {
     require APP . 'config/config.php';
     $options = [
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     ];
 
     if (strtoupper(DB_TYPE) === 'SQLITE') {
@@ -22,17 +21,27 @@ function getDbConnection()
         $options
     );
 }
+}
 
 class AuthController
 {
-    private $db;
+    protected $db;
 
     public function __construct()
     {
         $this->db = getDbConnection();
     }
 
-    private function respond(mixed $data, int $status = 200): never
+    /**
+     * Read and decode the JSON request body.
+     * Override in subclasses (e.g. testable versions) to inject fake input.
+     */
+    protected function getJsonInput(): array
+    {
+        return json_decode(file_get_contents('php://input'), true) ?? [];
+    }
+
+    protected function respond(mixed $data, int $status = 200): never
     {
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
@@ -40,17 +49,17 @@ class AuthController
         exit;
     }
 
-    private function error(string $message, int $status = 400): never
+    protected function error(string $message, int $status = 400): never
     {
         $this->respond(['error' => $message], $status);
     }
 
     public function register(): bool
     {
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $body = $this->getJsonInput();
 
         $username = trim($body['username'] ?? '');
-        $email = trim($body['email'] ?? '');
+        $email    = trim($body['email'] ?? '');
         $password = $body['password'] ?? '';
 
         if (strlen($username) < 3 || strlen($username) > 50) {
@@ -77,19 +86,19 @@ class AuthController
 
         $_SESSION['user_id'] = $userId;
         $_SESSION['username'] = $username;
-        $_SESSION['name'] = $username;
-        $_SESSION['email'] = $email;
-        $_SESSION['role'] = 'user';
+        $_SESSION['name']     = $username;
+        $_SESSION['email']    = $email;
+        $_SESSION['role']     = 'user';
 
         $this->respond(['user' => ['id' => $userId, 'username' => $username, 'name' => $username, 'email' => $email, 'role' => 'user']]);
     }
 
     public function login(): bool
     {
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $body = $this->getJsonInput();
 
         $identifier = trim($body['identifier'] ?? '');
-        $password = $body['password'] ?? '';
+        $password   = $body['password'] ?? '';
 
         if (empty($identifier) || empty($password)) {
             $this->error('Email/username dan password wajib diisi');
@@ -103,11 +112,11 @@ class AuthController
             $this->error('Email/username atau password salah');
         }
 
-        $_SESSION['user_id'] = $user->id;
+        $_SESSION['user_id']  = $user->id;
         $_SESSION['username'] = $user->username;
-        $_SESSION['name'] = $user->name;
-        $_SESSION['email'] = $user->email;
-        $_SESSION['role'] = $user->role;
+        $_SESSION['name']     = $user->name;
+        $_SESSION['email']    = $user->email;
+        $_SESSION['role']     = $user->role;
 
         $this->respond(['user' => ['id' => $user->id, 'username' => $user->username, 'name' => $user->name, 'email' => $user->email, 'role' => $user->role]]);
     }
@@ -118,17 +127,20 @@ class AuthController
             $this->error('Belum login', 401);
         }
         $this->respond(['user' => [
-            'id' => $_SESSION['user_id'],
+            'id'       => $_SESSION['user_id'],
             'username' => $_SESSION['username'],
-            'name' => $_SESSION['name'] ?? $_SESSION['username'],
-            'email' => $_SESSION['email'],
-            'role' => $_SESSION['role'] ?? 'user',
+            'name'     => $_SESSION['name'] ?? $_SESSION['username'],
+            'email'    => $_SESSION['email'],
+            'role'     => $_SESSION['role'] ?? 'user',
         ]]);
     }
 
     public function logout(): bool
     {
-        session_destroy();
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
         $this->respond(['success' => true]);
     }
 
@@ -136,7 +148,7 @@ class AuthController
     {
         requireAuth();
 
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $body = $this->getJsonInput();
         $name = trim($body['name'] ?? '');
 
         if (strlen($name) < 1 || strlen($name) > 100) {
@@ -149,11 +161,11 @@ class AuthController
         $_SESSION['name'] = $name;
 
         $this->respond(['user' => [
-            'id' => $_SESSION['user_id'],
+            'id'       => $_SESSION['user_id'],
             'username' => $_SESSION['username'],
-            'name' => $_SESSION['name'],
-            'email' => $_SESSION['email'],
-            'role' => $_SESSION['role'] ?? 'user',
+            'name'     => $_SESSION['name'],
+            'email'    => $_SESSION['email'],
+            'role'     => $_SESSION['role'] ?? 'user',
         ]]);
     }
 
@@ -161,9 +173,9 @@ class AuthController
     {
         requireAuth();
 
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $body            = $this->getJsonInput();
         $currentPassword = $body['current_password'] ?? '';
-        $newPassword = $body['new_password'] ?? '';
+        $newPassword     = $body['new_password'] ?? '';
 
         if (empty($currentPassword) || empty($newPassword)) {
             $this->error('Password saat ini dan password baru wajib diisi');

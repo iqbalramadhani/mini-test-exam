@@ -17,3 +17,6 @@ composer.lock
 # Allow React build output to be committed for git-based deployment
 !public/react-app/
 /node_modules
+
+# PHPUnit cache
+.phpunit.result.cache

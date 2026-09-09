@@ -1,7 +1,6 @@
 <?php
 
-session_start();
-
+if (!function_exists('getDbConnection')) {
 function getDbConnection()
 {
     require dirname(__DIR__) . '/config/config.php';
@@ -22,17 +21,18 @@ function getDbConnection()
         $options
     );
 }
+}
 
 class AttemptController
 {
-    private $db;
+    protected $db;
 
     public function __construct()
     {
         $this->db = getDbConnection();
     }
 
-    private function respond(mixed $data, int $status = 200): never
+    protected function respond(mixed $data, int $status = 200): never
     {
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
@@ -40,9 +40,18 @@ class AttemptController
         exit;
     }
 
-    private function error(string $message, int $status = 400): never
+    protected function error(string $message, int $status = 400): never
     {
         $this->respond(['error' => $message], $status);
+    }
+
+    /**
+     * Read and decode the JSON request body.
+     * Override in subclasses (e.g. testable versions) to inject fake input.
+     */
+    protected function getJsonInput(): array
+    {
+        return json_decode(file_get_contents('php://input'), true) ?? [];
     }
 
     public function published(): bool
@@ -128,7 +137,7 @@ class AttemptController
             $this->error('Attempt ini sudah selesai dikumpulkan', 400);
         }
 
-        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $body    = $this->getJsonInput();
         $answers = $body['answers'] ?? [];
 
         if (empty($answers)) {
@@ -166,15 +175,18 @@ class AttemptController
 
             $score = $qCount > 0 ? round(($correctCount / $qCount) * 100, 2) : 0;
 
-            $stmt = $this->db->prepare("UPDATE attempt SET finished_at = NOW(), score = :score WHERE id = :id");
+            $stmt = $this->db->prepare("UPDATE attempt SET finished_at = CURRENT_TIMESTAMP, score = :score WHERE id = :id");
             $stmt->execute([':score' => $score, ':id' => $attemptId]);
 
             $this->db->commit();
-            $this->respond(['success' => true, 'score' => $score, 'correct' => $correctCount, 'total' => $qCount]);
         } catch (Exception $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             $this->error('Gagal menyimpan jawaban');
         }
+
+        $this->respond(['success' => true, 'score' => $score, 'correct' => $correctCount, 'total' => $qCount]);
     }
 
     public function get(int $attemptId): bool
