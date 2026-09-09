@@ -159,9 +159,33 @@ export default function TakeExam() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex gap-6">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Mobile Navigation */}
+          <div className="md:hidden w-full mb-6">
+            <div className="bg-white/80 backdrop-blur-lg rounded-2xl border border-white p-4 shadow-sm">
+              <p className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">Navigasi Soal</p>
+              <div className="flex gap-2 overflow-x-auto pb-2 snap-x">
+                {questions.map((q, i) => (
+                  <button
+                    key={q.id}
+                    onClick={() => {
+                      document.getElementById(`question-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }}
+                    className={`w-10 h-10 shrink-0 snap-center rounded-xl text-xs font-bold transition-all flex items-center justify-center ${
+                      answers[q.id] !== undefined
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                        : 'bg-white border border-slate-200 text-slate-500 hover:border-indigo-300'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="hidden md:block w-52 shrink-0">
-            <div className="bg-white/80 backdrop-blur-lg rounded-2xl border border-white p-5 shadow-sm sticky top-24">
+            <div className="bg-white/80 backdrop-blur-lg rounded-2xl border border-white p-5 shadow-sm sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
               <p className="text-xs font-bold text-slate-400 mb-4 uppercase tracking-wider text-center">Nomor Soal</p>
               <div className="grid grid-cols-5 gap-2">
                 {questions.map((q, i) => (
@@ -170,7 +194,7 @@ export default function TakeExam() {
                     onClick={() => {
                       document.getElementById(`question-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                     }}
-                    className={`aspect-square rounded-xl text-xs font-bold transition-all ${
+                    className={`aspect-square flex items-center justify-center rounded-xl text-xs font-bold transition-all ${
                       answers[q.id] !== undefined
                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
                         : 'bg-white border border-slate-200 text-slate-500 hover:border-indigo-300'
