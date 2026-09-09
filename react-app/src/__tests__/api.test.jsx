@@ -19,7 +19,7 @@ describe('authApi', () => {
     })
 
     const result = await authApi.register({ username: 'test', email: 'test@mail.com', password: 'password' })
-    expect(fetch).toHaveBeenCalledWith('/auth/register', expect.objectContaining({ method: 'POST' }))
+    expect(fetch).toHaveBeenCalledWith('/api/auth/register', expect.objectContaining({ method: 'POST' }))
     expect(result.user.username).toBe('test')
   })
 
@@ -31,7 +31,7 @@ describe('authApi', () => {
     })
 
     await authApi.login({ identifier: 'test', password: 'pass' })
-    expect(fetch).toHaveBeenCalledWith('/auth/login', expect.objectContaining({ method: 'POST' }))
+    expect(fetch).toHaveBeenCalledWith('/api/auth/login', expect.objectContaining({ method: 'POST' }))
   })
 
   it('me sends GET to /auth/me', async () => {
@@ -42,7 +42,7 @@ describe('authApi', () => {
     })
 
     await authApi.me()
-    expect(fetch).toHaveBeenCalledWith('/auth/me', expect.any(Object))
+    expect(fetch).toHaveBeenCalledWith('/api/auth/me', expect.any(Object))
   })
 })
 
@@ -55,7 +55,7 @@ describe('examApi', () => {
     })
 
     await examApi.list()
-    expect(fetch).toHaveBeenCalledWith('/exams', expect.any(Object))
+    expect(fetch).toHaveBeenCalledWith('/api/exams', expect.any(Object))
   })
 
   it('create sends POST to /exams', async () => {
@@ -66,7 +66,7 @@ describe('examApi', () => {
     })
 
     await examApi.create({ title: 'Ujian', description: 'Test' })
-    expect(fetch).toHaveBeenCalledWith('/exams', expect.objectContaining({ method: 'POST' }))
+    expect(fetch).toHaveBeenCalledWith('/api/exams', expect.objectContaining({ method: 'POST' }))
   })
 
   it('get sends GET to /exams/:id', async () => {
@@ -77,7 +77,7 @@ describe('examApi', () => {
     })
 
     await examApi.get(1)
-    expect(fetch).toHaveBeenCalledWith('/exams/1', expect.any(Object))
+    expect(fetch).toHaveBeenCalledWith('/api/exams/1', expect.any(Object))
   })
 })
 
@@ -90,6 +90,6 @@ describe('attemptApi', () => {
     })
 
     await attemptApi.start(1)
-    expect(fetch).toHaveBeenCalledWith('/attempts/start/1', expect.objectContaining({ method: 'POST' }))
+    expect(fetch).toHaveBeenCalledWith('/api/attempts/start/1', expect.objectContaining({ method: 'POST' }))
   })
 })

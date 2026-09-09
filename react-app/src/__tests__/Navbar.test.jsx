@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Navbar from '../components/Navbar'
-import { AuthContext } from '../context/AuthContext'
+import { AuthProvider, AuthContext } from '../context/AuthContext'
 
 vi.mock('../api', () => ({
   authApi: {
