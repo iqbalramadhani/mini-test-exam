@@ -3,6 +3,11 @@
 /**
  * API Router — dispatches /api/* routes to JSON handlers
  */
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 function apiRespond(mixed $data, int $status = 200): never
 {
     http_response_code($status);
