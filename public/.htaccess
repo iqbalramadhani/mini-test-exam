@@ -8,8 +8,8 @@ RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
 # Pass API routes to index.php
-RewriteCond %{REQUEST_URI} ^/api/
-RewriteRule ^ index.php [L,QSA]
+RewriteCond %{REQUEST_URI} ^/?api/
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
 
 # Serve React SPA for all other non-file/non-dir requests
 RewriteCond %{REQUEST_FILENAME} !-f
