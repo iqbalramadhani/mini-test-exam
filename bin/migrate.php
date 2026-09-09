@@ -45,16 +45,17 @@ try {
         $pdo = new PDO($dsn);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     } else {
-        $testPdo = new PDO(DB_TYPE . ':host=' . DB_HOST, DB_USER, DB_PASS);
+        // Use 127.0.0.1 instead of localhost to force TCP (avoids missing-socket errors)
+        $tcpHost = (strtoupper(DB_HOST) === 'LOCALHOST') ? '127.0.0.1' : DB_HOST;
+        $testPdo = new PDO(DB_TYPE . ':host=' . $tcpHost, DB_USER, DB_PASS);
+        $charset = DB_CHARSET;
         foreach ([DB_CHARSET, 'utf8mb3', 'utf8'] as $candidate) {
             if (testCharset($testPdo, $candidate)) {
                 $charset = $candidate;
                 break;
             }
         }
-        $dsn = DB_TYPE . ':host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . $charset;
-        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-        $dsn = DB_TYPE . ':host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . $charset;
+        $dsn = DB_TYPE . ':host=' . $tcpHost . ';dbname=' . DB_NAME . ';charset=' . $charset;
         $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
     }
 
