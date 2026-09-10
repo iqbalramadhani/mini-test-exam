@@ -41,12 +41,6 @@ export default function Navbar() {
             />
           )}
 
-          {!user && (
-            <>
-              <Link to="/login" className="text-sm text-slate-600 hover:text-slate-900 transition">Masuk</Link>
-              <Link to="/register" className="text-sm text-slate-600 hover:text-slate-900 transition">Daftar</Link>
-            </>
-          )}
           {user && (
             <Link to="/dashboard" className="text-sm text-indigo-600 font-medium hover:text-indigo-800 transition">Dashboard</Link>
           )}
