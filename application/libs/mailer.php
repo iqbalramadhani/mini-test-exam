@@ -40,10 +40,15 @@ class Mailer
         try {
             $this->mail->addAddress($toEmail, $toName);
 
-            // Ganti URL dengan base URL react-app. Biasanya http://localhost:5173 atau sesuai env.
-            // Kita bisa menebak dari HTTP_HOST atau set explicit base url. 
-            // Untuk development vite: http://localhost:5173
-            $baseUrl = getenv('FRONTEND_URL') ?: 'http://localhost:5173';
+            // Gunakan FRONTEND_URL dari .env jika di-set secara eksplisit.
+            // Jika tidak, otomatis mendeteksi URL saat ini (berguna untuk production).
+            $baseUrl = getenv('FRONTEND_URL');
+            if (!$baseUrl) {
+                $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) ? 'https://' : 'http://';
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                $subFolder = defined('URL_SUB_FOLDER') ? URL_SUB_FOLDER : '';
+                $baseUrl = rtrim($protocol . $host . $subFolder, '/');
+            }
             $verifyLink = $baseUrl . '/verify-email?token=' . urlencode($token);
 
             $this->mail->Subject = 'Konfirmasi Pendaftaran Akun';
