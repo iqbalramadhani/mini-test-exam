@@ -169,7 +169,7 @@ class AuthController
     public function me(): bool
     {
         if (!isset($_SESSION['user_id'])) {
-            $this->respond(['user' => null]);
+            $this->error('Unauthorized', 401);
         }
         $this->respond(['user' => [
             'id'       => $_SESSION['user_id'],

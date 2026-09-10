@@ -53,22 +53,8 @@ function AppRoutes() {
           }
         />
         <Route path="/exams" element={<AvailableExams />} />
-        <Route
-          path="/take/:id"
-          element={
-            <ProtectedRoute>
-              <TakeExam />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/result/:attemptId"
-          element={
-            <ProtectedRoute>
-              <ExamResult />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/take/:id" element={<TakeExam />} />
+        <Route path="/result/:attemptId" element={<ExamResult />} />
         <Route
           path="/profile"
           element={

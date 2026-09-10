@@ -71,7 +71,7 @@ class ExamController
 
     public function index(): bool
     {
-        // $this->requireAuth();
+        $this->requireAuth();
         $stmt = $this->db->prepare("
             SELECT e.id, e.title, e.description, e.time_limit_minutes, e.is_published,
                    u.username as creator, e.created_at

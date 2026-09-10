@@ -71,16 +71,15 @@ class AttemptController
         ");
         $stmt->execute();
             $this->respond(['exams' => $stmt->fetchAll()]);
-        } catch (Exception $e) {
+        } catch (\PDOException $e) {
             $this->respond(['exams' => []]);
         }
     }
 
     public function start(int $examId): bool
     {
-        if (!isset($_SESSION['user_id'])) {
-            $this->error('Unauthorized', 401);
-        }
+        // Allow guest access; use session user if logged in
+        $userId = $_SESSION['user_id'] ?? null;
 
         $body = $this->getJsonInput();
         $mode = $body['mode'] ?? 'tryout';
@@ -116,7 +115,7 @@ class AttemptController
         unset($q);
 
         $stmt = $this->db->prepare("INSERT INTO attempt (exam_id, user_id, mode) VALUES (:eid, :uid, :mode)");
-        $stmt->execute([':eid' => $examId, ':uid' => $_SESSION['user_id'], ':mode' => $mode]);
+        $stmt->execute([':eid' => $examId, ':uid' => $userId, ':mode' => $mode]);
         $attemptId = $this->db->lastInsertId();
 
         $this->respond([
@@ -134,12 +133,15 @@ class AttemptController
 
     public function submit(int $attemptId): bool
     {
-        if (!isset($_SESSION['user_id'])) {
-            $this->error('Unauthorized', 401);
-        }
+        $userId = $_SESSION['user_id'] ?? null;
 
-        $stmt = $this->db->prepare("SELECT a.*, e.time_limit_minutes FROM attempt a JOIN exam e ON e.id = a.exam_id WHERE a.id = :id AND a.user_id = :uid");
-        $stmt->execute([':id' => $attemptId, ':uid' => $_SESSION['user_id']]);
+        if ($userId !== null) {
+            $stmt = $this->db->prepare("SELECT a.*, e.time_limit_minutes FROM attempt a JOIN exam e ON e.id = a.exam_id WHERE a.id = :id AND a.user_id = :uid");
+            $stmt->execute([':id' => $attemptId, ':uid' => $userId]);
+        } else {
+            $stmt = $this->db->prepare("SELECT a.*, e.time_limit_minutes FROM attempt a JOIN exam e ON e.id = a.exam_id WHERE a.id = :id AND a.user_id IS NULL");
+            $stmt->execute([':id' => $attemptId]);
+        }
         $attempt = $stmt->fetch();
         if (!$attempt) {
             $this->error('Attempt tidak ditemukan', 404);
@@ -254,12 +256,15 @@ class AttemptController
 
     public function get(int $attemptId): bool
     {
-        if (!isset($_SESSION['user_id'])) {
-            $this->error('Unauthorized', 401);
-        }
+        $userId = $_SESSION['user_id'] ?? null;
 
-        $stmt = $this->db->prepare("SELECT * FROM attempt WHERE id = :id AND user_id = :uid");
-        $stmt->execute([':id' => $attemptId, ':uid' => $_SESSION['user_id']]);
+        if ($userId !== null) {
+            $stmt = $this->db->prepare("SELECT * FROM attempt WHERE id = :id AND user_id = :uid");
+            $stmt->execute([':id' => $attemptId, ':uid' => $userId]);
+        } else {
+            $stmt = $this->db->prepare("SELECT * FROM attempt WHERE id = :id AND user_id IS NULL");
+            $stmt->execute([':id' => $attemptId]);
+        }
         $attempt = $stmt->fetch();
         if (!$attempt) {
             $this->error('Attempt tidak ditemukan', 404);

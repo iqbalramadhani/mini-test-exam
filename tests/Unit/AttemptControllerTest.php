@@ -141,7 +141,7 @@ class AttemptControllerTest extends TestCase
             CREATE TABLE attempt (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 exam_id INTEGER NOT NULL,
-                user_id INTEGER NOT NULL,
+                user_id INTEGER NULL,
                 started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 finished_at TIMESTAMP NULL,
                 score DECIMAL(5,2) NULL,
@@ -191,13 +191,13 @@ class AttemptControllerTest extends TestCase
         $this->assertCount(2, $controller->capturedResponse['exams']);
     }
 
-    public function testPublishedRequiresAuth(): void
+    public function testPublishedAllowsGuest(): void
     {
         $controller = $this->makeTestableAttemptController();
         $this->call(fn() => $controller->published());
 
-        $this->assertEquals(401, $controller->capturedStatus);
-        $this->assertArrayHasKey('error', $controller->capturedResponse);
+        $this->assertEquals(200, $controller->capturedStatus);
+        $this->assertArrayHasKey('exams', $controller->capturedResponse);
     }
 
     public function testPublishedReturnsEmptyWhenNonePublished(): void
@@ -269,12 +269,13 @@ class AttemptControllerTest extends TestCase
         $this->assertFalse(isset($questions[0]->correct_choice_index));
     }
 
-    public function testStartAttemptRequiresAuth(): void
+    public function testStartAttemptAllowsGuest(): void
     {
         $controller = $this->makeTestableAttemptController();
         $this->call(fn() => $controller->start(1));
 
-        $this->assertEquals(401, $controller->capturedStatus);
+        // No auth required; exam 1 doesn't exist so 404
+        $this->assertEquals(404, $controller->capturedStatus);
     }
 
     public function testStartAttemptNotFound(): void
@@ -396,12 +397,13 @@ class AttemptControllerTest extends TestCase
         $this->assertEquals(0, $c->capturedResponse['correct']);
     }
 
-    public function testSubmitAttemptRequiresAuth(): void
+    public function testSubmitAttemptAllowsGuest(): void
     {
         $controller = $this->makeTestableAttemptController();
         $this->call(fn() => $controller->submit(1));
 
-        $this->assertEquals(401, $controller->capturedStatus);
+        // No auth required; attempt 1 not found for guest so 404
+        $this->assertEquals(404, $controller->capturedStatus);
     }
 
     public function testSubmitAttemptNotFound(): void
@@ -535,12 +537,13 @@ class AttemptControllerTest extends TestCase
         $this->assertEquals('PHP', $answers[0]->selected_text);
     }
 
-    public function testGetAttemptRequiresAuth(): void
+    public function testGetAttemptAllowsGuest(): void
     {
         $controller = $this->makeTestableAttemptController();
         $this->call(fn() => $controller->get(1));
 
-        $this->assertEquals(401, $controller->capturedStatus);
+        // No auth required; attempt 1 not found for guest so 404
+        $this->assertEquals(404, $controller->capturedStatus);
     }
 
     public function testGetAttemptNotFound(): void
