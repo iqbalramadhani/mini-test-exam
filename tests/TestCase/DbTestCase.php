@@ -98,7 +98,7 @@ abstract class DbTestCase extends BaseTestCase
             CREATE TABLE attempt (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 exam_id INTEGER NOT NULL,
-                user_id INTEGER NOT NULL,
+                user_id INTEGER NULL,
                 started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 finished_at TIMESTAMP NULL,
                 score DECIMAL(5,2) NULL,

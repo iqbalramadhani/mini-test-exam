@@ -7,7 +7,7 @@ class CreateAttemptTables
         $sql = "CREATE TABLE IF NOT EXISTS attempt (
             id INT AUTO_INCREMENT PRIMARY KEY,
             exam_id INT NOT NULL,
-            user_id INT NOT NULL,
+            user_id INT NULL,
             started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             finished_at TIMESTAMP NULL,
             score DECIMAL(5,2) NULL,

@@ -1,5 +1,20 @@
 # CHANGELOG — Perbaikan & Fitur MINI
 
+## Fix #18 — Error Ga Ada Response Saat Guest Memulai Ujian (Production)
+**Tanggal:** 2026-09-10
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `migrations/006_create_attempt_tables.php`, `migrations/012_make_attempt_user_id_nullable.php`, `tests/TestCase/DbTestCase.php` |
+| **Masalah** | Ketika guest mengakses `/take/:id?mode=practice` di production, muncul error (ga ada response / white screen / 500 error) dan tidak bisa memulai ujian. |
+| **Akar** | Kolom `user_id` di tabel `attempt` dibuat sebagai `INT NOT NULL` pada skema database. Ketika guest memulai ujian, backend mencoba memasukkan nilai `NULL` ke `user_id`, sehingga menyebabkan `PDOException` yang tidak tertangani (fatal error) yang mengakibatkan response API gagal (no response). |
+| **Fix** | 1. Mengubah struktur skema awal di `006_create_attempt_tables.php` untuk mengatur `user_id INT NULL`.<br>2. Menambahkan migrasi baru `012_make_attempt_user_id_nullable.php` untuk mengubah tabel di production yang sudah telanjur terbuat (mendukung MySQL `MODIFY COLUMN` dan *workaround* untuk SQLite).<br>3. Memperbaiki skema di `DbTestCase.php` agar in-memory SQLite menyetujui schema yang baru. |
+| **Verifikasi** | Backend tests (`composer test`) sukses dijalankan, dan guest dapat melakukan start attempt dengan `user_id` menjadi `NULL`. |
+| **Pelajaran** | Kolom foreign key atau referensi relasional yang bisa null (untuk anonymous / guest usage) harus secara eksplisit dideklarasikan `NULL` di skema SQL. Uncaught exceptions di level model/DB menyebabkan response JSON gagal. |
+| **Log Keyword** | `user_id`, `NOT NULL`, `attempt`, `guest`, `PDOException`, `NULL`, `no response` |
+| **Deploy** | Harus di-deploy dan dijalankan migrasi DB terbaru (`012_make_attempt_user_id_nullable.php`) di server production. |
+
 ## Fix #17 — Submit/Get Tanpa Login + Auth & Navbar Fix
 **Tanggal:** 2026-09-10
 **Status:** ✅ LIVE
