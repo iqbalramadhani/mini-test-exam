@@ -56,11 +56,9 @@ class AttemptController
 
     public function published(): bool
     {
-        if (!isset($_SESSION['user_id'])) {
-            $this->error('Unauthorized', 401);
-        }
-
-        $stmt = $this->db->prepare("
+        // $this->requireAuth();
+        try {
+            $stmt = $this->db->prepare("
             SELECT e.id, e.title, e.description, e.time_limit_minutes,
                    COUNT(DISTINCT q.id) as question_count,
                    COUNT(DISTINCT a.user_id) as attempt_count
@@ -72,7 +70,10 @@ class AttemptController
             ORDER BY e.created_at DESC
         ");
         $stmt->execute();
-        $this->respond(['exams' => $stmt->fetchAll()]);
+            $this->respond(['exams' => $stmt->fetchAll()]);
+        } catch (Exception $e) {
+            $this->respond(['exams' => []]);
+        }
     }
 
     public function start(int $examId): bool

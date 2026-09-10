@@ -163,13 +163,13 @@ class AuthController
         $_SESSION['email']    = $user->email;
         $_SESSION['role']     = $user->role;
 
-        $this->respond(['user' => ['id' => $user->id, 'username' => $user->username, 'name' => $user->name, 'email' => $user->email, 'role' => $user->role]]);
+        $this->respond(['user' => ['id' => $user->id, 'username' => $user->username, 'name' => $user->name ?? $user->username, 'email' => $user->email, 'role' => $user->role]]);
     }
 
     public function me(): bool
     {
         if (!isset($_SESSION['user_id'])) {
-            $this->error('Belum login', 401);
+            $this->respond(['user' => null]);
         }
         $this->respond(['user' => [
             'id'       => $_SESSION['user_id'],

@@ -10,6 +10,8 @@ import AvailableExams from './pages/AvailableExams'
 import TakeExam from './pages/TakeExam'
 import ExamResult from './pages/ExamResult'
 import Profile from './pages/Profile'
+import Admin from './pages/Admin'
+import AdminLogin from './pages/AdminLogin'
 import { ProtectedRoute } from './context/AuthContext'
 
 function AppRoutes() {
@@ -30,7 +32,7 @@ function AppRoutes() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 text-slate-800">
       {!isTakeExam && <Navbar />}
       <Routes>
-        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/exams" replace />} />
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" replace />} />
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" replace />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
@@ -50,14 +52,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/exams"
-          element={
-            <ProtectedRoute>
-              <AvailableExams />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/exams" element={<AvailableExams />} />
         <Route
           path="/take/:id"
           element={
@@ -82,6 +77,8 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin" element={user?.role === 'admin' ? <Navigate to="/dashboard" replace /> : <Navigate to="/admin-login" replace />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
       </Routes>
     </div>
   )
