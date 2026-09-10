@@ -68,7 +68,6 @@ jobs:
             --exclude='*.db' \
             --exclude='*.sqlite*' \
             --exclude='node_modules' \
-            --exclude='vendor' \
             --exclude='./react-app/' \
             --exclude='/react-app/' \
             --exclude='.DS_Store' \
