@@ -11,12 +11,16 @@
  * Useful to show every little problem during development, but only show hard errors in production
  */
 if (!defined('ENVIRONMENT')) {
-    define('ENVIRONMENT', 'development');
+    $appEnv = getenv('APP_ENV') ?: 'production';
+    define('ENVIRONMENT', $appEnv);
 }
 
 if (ENVIRONMENT == 'development' || ENVIRONMENT == 'dev') {
     error_reporting(E_ALL);
     ini_set("display_errors", 1);
+} else {
+    error_reporting(0);
+    ini_set("display_errors", 0);
 }
 
 /**

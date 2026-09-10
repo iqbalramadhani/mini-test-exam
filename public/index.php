@@ -39,6 +39,9 @@ require APP . 'libs/security.php';
 // Set security headers on every request
 Security::setHeaders();
 
+// Start secure session
+Security::initSession();
+
 // Handle API routes before the main MVC router
 $url = trim($_GET['url'] ?? '', '/');
 if (str_starts_with($url, 'api/')) {

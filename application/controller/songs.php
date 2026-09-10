@@ -45,6 +45,12 @@ class Songs extends Controller
             $track = trim($_POST["track"]);
             $link = trim($_POST["link"]);
 
+            // Validate URL scheme to prevent javascript: or data: links
+            if (!empty($link) && !Security::isSafeUrl($link)) {
+                header('location: ' . URL . 'songs/index');
+                return;
+            }
+
             if (!empty($artist) && !empty($track)) {
                 $this->model->addSong($artist, $track, $link);
             }
@@ -57,18 +63,24 @@ class Songs extends Controller
     /**
      * ACTION: deleteSong
      * This method handles what happens when you move to http://yourproject/songs/deletesong
-     * IMPORTANT: This is not a normal page, it's an ACTION. This is where the "delete a song" button on songs/index
-     * directs the user after the click. This method handles all the data from the GET request (in the URL!) and then
-     * redirects the user back to songs/index via the last line: header(...)
-     * This is an example of how to handle a GET request.
-     * @param int $song_id Id of the to-delete song
+     * IMPORTANT: Changed to POST-only to prevent CSRF attacks.
+     * @param int $song_id Id of song
      */
-    public function deleteSong($song_id)
+    public function deleteSong($song_id = null)
     {
-        // if we have an id of a song that should be deleted
-        if (isset($song_id) && Security::isValidId($song_id)) {
-            // do deleteSong() in model/model.php
-            $this->model->deleteSong((int) $song_id);
+        // Require POST method
+        if (!Security::isPost()) {
+            header('location: ' . URL . 'songs/index');
+            return;
+        }
+
+        $this->checkCsrf();
+
+        // Try POST data first, fall back to URL parameter
+        $songId = $_POST['song_id'] ?? $song_id;
+
+        if (isset($songId) && Security::isValidId($songId)) {
+            $this->model->deleteSong((int) $songId);
         }
 
         // where to go after song has been deleted

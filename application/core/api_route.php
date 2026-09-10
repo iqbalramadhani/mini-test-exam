@@ -5,8 +5,11 @@
  */
 
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    Security::initSession();
 }
+
+// CSRF protection for API: validate Origin/Referer on mutating requests
+Security::validateApiCsrf();
 
 function apiRespond(mixed $data, int $status = 200): never
 {
@@ -128,10 +131,10 @@ if (!$handled && $parts[0] === 'attempts') {
 
 // --- migration routes (protected by X-Migration-Secret header) ---
 if (!$handled && $parts[0] === 'migration') {
-    require APP . 'api/migration.php';
-    $mig = new MigrationController();
     if ($method === 'POST' && ($parts[1] ?? '') === 'run') {
-        $handled = $mig->run();
+        // migration.php self-executes: instantiates controller and calls run()
+        require APP . 'api/migration.php';
+        $handled = true;
     } else {
         apiJsonError('Method not allowed', 405);
     }

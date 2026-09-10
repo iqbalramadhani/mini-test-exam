@@ -102,7 +102,7 @@ class AuthControllerTest extends TestCase
     {
         $before     = $this->pdo->query("SELECT COUNT(*) FROM user")->fetchColumn();
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['username' => 'newuser', 'email' => 'new@example.com', 'password' => 'password123']);
+        $controller->setInput(['username' => 'newuser', 'email' => 'new@example.com', 'password' => 'Password1']);
         $this->call(fn() => $controller->register());
 
         $after = $this->pdo->query("SELECT COUNT(*) FROM user")->fetchColumn();
@@ -110,7 +110,7 @@ class AuthControllerTest extends TestCase
 
         $user = $this->pdo->query("SELECT * FROM user WHERE username = 'newuser'")->fetch();
         $this->assertNotNull($user);
-        $this->assertTrue(password_verify('password123', $user->password_hash));
+        $this->assertTrue(password_verify('Password1', $user->password_hash));
         $this->assertEquals('new@example.com', $user->email);
         $this->assertEquals('user', $user->role);
         $this->assertEquals(200, $controller->capturedStatus);
@@ -120,7 +120,7 @@ class AuthControllerTest extends TestCase
     public function testRegisterSetsSessionAfterSuccess(): void
     {
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['username' => 'sessionuser', 'email' => 'sess@example.com', 'password' => 'password123']);
+        $controller->setInput(['username' => 'sessionuser', 'email' => 'sess@example.com', 'password' => 'Password1']);
         $this->call(fn() => $controller->register());
 
         $this->assertArrayHasKey('user_id', $_SESSION);
@@ -131,7 +131,7 @@ class AuthControllerTest extends TestCase
     public function testRegisterRejectsShortUsername(): void
     {
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['username' => 'ab', 'email' => 'ab@example.com', 'password' => 'password123']);
+        $controller->setInput(['username' => 'ab', 'email' => 'ab@example.com', 'password' => 'Password1']);
         $this->call(fn() => $controller->register());
 
         $count = $this->pdo->query("SELECT COUNT(*) FROM user WHERE username = 'ab'")->fetchColumn();
@@ -142,7 +142,7 @@ class AuthControllerTest extends TestCase
     public function testRegisterRejectsTooLongUsername(): void
     {
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['username' => str_repeat('a', 51), 'email' => 'long@example.com', 'password' => 'password123']);
+        $controller->setInput(['username' => str_repeat('a', 51), 'email' => 'long@example.com', 'password' => 'Password1']);
         $this->call(fn() => $controller->register());
 
         $this->assertArrayHasKey('error', $controller->capturedResponse);
@@ -151,7 +151,7 @@ class AuthControllerTest extends TestCase
     public function testRegisterRejectsInvalidEmail(): void
     {
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['username' => 'validuser', 'email' => 'notanemail', 'password' => 'password123']);
+        $controller->setInput(['username' => 'validuser', 'email' => 'notanemail', 'password' => 'Password1']);
         $this->call(fn() => $controller->register());
 
         $count = $this->pdo->query("SELECT COUNT(*) FROM user WHERE username = 'validuser'")->fetchColumn();
@@ -172,10 +172,10 @@ class AuthControllerTest extends TestCase
 
     public function testRegisterRejectsDuplicateUsername(): void
     {
-        $this->seedUser('existing', 'existing@example.com', 'password123');
+        $this->seedUser('existing', 'existing@example.com', 'Password1');
 
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['username' => 'existing', 'email' => 'different@example.com', 'password' => 'password123']);
+        $controller->setInput(['username' => 'existing', 'email' => 'different@example.com', 'password' => 'Password1']);
         $this->call(fn() => $controller->register());
 
         $count = $this->pdo->query("SELECT COUNT(*) FROM user WHERE username = 'existing'")->fetchColumn();
@@ -185,10 +185,10 @@ class AuthControllerTest extends TestCase
 
     public function testRegisterRejectsDuplicateEmail(): void
     {
-        $this->seedUser('existing', 'existing@example.com', 'password123');
+        $this->seedUser('existing', 'existing@example.com', 'Password1');
 
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['username' => 'different', 'email' => 'existing@example.com', 'password' => 'password123']);
+        $controller->setInput(['username' => 'different', 'email' => 'existing@example.com', 'password' => 'Password1']);
         $this->call(fn() => $controller->register());
 
         $count = $this->pdo->query("SELECT COUNT(*) FROM user WHERE email = 'existing@example.com'")->fetchColumn();
@@ -208,22 +208,22 @@ class AuthControllerTest extends TestCase
     public function testRegisterPasswordIsHashed(): void
     {
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['username' => 'hashtest', 'email' => 'hash@example.com', 'password' => 'plainpassword']);
+        $controller->setInput(['username' => 'hashtest', 'email' => 'hash@example.com', 'password' => 'Plainpass1']);
         $this->call(fn() => $controller->register());
 
         $user = $this->pdo->query("SELECT password_hash FROM user WHERE username = 'hashtest'")->fetch();
         $this->assertNotNull($user);
         $this->assertNotEquals('plainpassword', $user->password_hash);
-        $this->assertTrue(password_verify('plainpassword', $user->password_hash));
+        $this->assertTrue(password_verify('Plainpass1', $user->password_hash));
     }
 
     // ─── Login ───────────────────────────────────────────────────────────────
 
     public function testLoginWithValidCredentials(): void
     {
-        $userId     = $this->seedUser('testuser', 't@example.com', 'secret123');
+        $userId     = $this->seedUser('testuser', 't@example.com', 'Secret12');
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['identifier' => 'testuser', 'password' => 'secret123']);
+        $controller->setInput(['identifier' => 'testuser', 'password' => 'Secret12']);
         $this->call(fn() => $controller->login());
 
         $this->assertEquals($userId, (int) $_SESSION['user_id']);
@@ -234,9 +234,9 @@ class AuthControllerTest extends TestCase
 
     public function testLoginWithEmailAsIdentifier(): void
     {
-        $userId     = $this->seedUser('emailuser', 'email@example.com', 'pass123');
+        $userId     = $this->seedUser('emailuser', 'email@example.com', 'Pass1234');
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['identifier' => 'email@example.com', 'password' => 'pass123']);
+        $controller->setInput(['identifier' => 'email@example.com', 'password' => 'Pass1234']);
         $this->call(fn() => $controller->login());
 
         $this->assertEquals($userId, (int) $_SESSION['user_id']);
@@ -245,9 +245,9 @@ class AuthControllerTest extends TestCase
 
     public function testLoginWithWrongPassword(): void
     {
-        $this->seedUser('user', 'u@example.com', 'correct123');
+        $this->seedUser('user', 'u@example.com', 'Correct1');
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['identifier' => 'user', 'password' => 'wrongpass']);
+        $controller->setInput(['identifier' => 'user', 'password' => 'Wrongpas1']);
         $this->call(fn() => $controller->login());
 
         $this->assertArrayHasKey('error', $controller->capturedResponse);
@@ -257,7 +257,7 @@ class AuthControllerTest extends TestCase
     public function testLoginWithNonExistentUser(): void
     {
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['identifier' => 'nobody', 'password' => 'pass123']);
+        $controller->setInput(['identifier' => 'nobody', 'password' => 'Pass1234']);
         $this->call(fn() => $controller->login());
 
         $this->assertArrayHasKey('error', $controller->capturedResponse);
@@ -274,9 +274,9 @@ class AuthControllerTest extends TestCase
 
     public function testLoginWithDisabledUser(): void
     {
-        $this->seedUser('disabled', 'd@example.com', 'secret123', 'user', false);
+        $this->seedUser('disabled', 'd@example.com', 'Secret12', 'user', false);
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['identifier' => 'disabled', 'password' => 'secret123']);
+        $controller->setInput(['identifier' => 'disabled', 'password' => 'Secret12']);
         $this->call(fn() => $controller->login());
 
         $this->assertArrayHasKey('error', $controller->capturedResponse);
@@ -285,9 +285,9 @@ class AuthControllerTest extends TestCase
 
     public function testLoginSetsSessionOnSuccess(): void
     {
-        $userId     = $this->seedUser('sesstest', 'ss@example.com', 'pass123');
+        $userId     = $this->seedUser('sesstest', 'ss@example.com', 'Pass1234');
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['identifier' => 'sesstest', 'password' => 'pass123']);
+        $controller->setInput(['identifier' => 'sesstest', 'password' => 'Pass1234']);
         $this->call(fn() => $controller->login());
 
         $this->assertEquals($userId, (int) $_SESSION['user_id']);
@@ -299,7 +299,7 @@ class AuthControllerTest extends TestCase
 
     public function testMeReturnsCurrentUser(): void
     {
-        $userId = $this->seedUser('member', 'm@example.com', 'pass123');
+        $userId = $this->seedUser('member', 'm@example.com', 'Pass1234');
         $this->loginAs($userId);
 
         $controller = $this->makeTestableAuthController();
@@ -320,7 +320,7 @@ class AuthControllerTest extends TestCase
 
     public function testMeReturnsRoleFromSession(): void
     {
-        $userId = $this->seedUser('admin', 'a@example.com', 'pass123', 'admin');
+        $userId = $this->seedUser('admin', 'a@example.com', 'Pass1234', 'admin');
         $this->loginAs($userId);
 
         $controller = $this->makeTestableAuthController();
@@ -333,7 +333,7 @@ class AuthControllerTest extends TestCase
 
     public function testLogoutDestroysSession(): void
     {
-        $userId = $this->seedUser('logouttest', 'l@test.com', 'pass123');
+        $userId = $this->seedUser('logouttest', 'l@test.com', 'Pass1234');
         $this->loginAs($userId);
 
         $controller = $this->makeTestableAuthController();
@@ -347,7 +347,7 @@ class AuthControllerTest extends TestCase
 
     public function testUpdateProfileChangesName(): void
     {
-        $userId = $this->seedUser('editor', 'e@test.com', 'pass123');
+        $userId = $this->seedUser('editor', 'e@test.com', 'Pass1234');
         $this->loginAs($userId);
 
         $controller = $this->makeTestableAuthController();
@@ -362,7 +362,7 @@ class AuthControllerTest extends TestCase
 
     public function testUpdateProfileRejectsEmptyName(): void
     {
-        $userId = $this->seedUser('up', 'up@test.com', 'pass123');
+        $userId = $this->seedUser('up', 'up@test.com', 'Pass1234');
         $this->loginAs($userId);
 
         $controller = $this->makeTestableAuthController();
@@ -374,7 +374,7 @@ class AuthControllerTest extends TestCase
 
     public function testUpdateProfileRejectsTooLongName(): void
     {
-        $userId = $this->seedUser('uplong', 'upl@test.com', 'pass123');
+        $userId = $this->seedUser('uplong', 'upl@test.com', 'Pass1234');
         $this->loginAs($userId);
 
         $controller = $this->makeTestableAuthController();
@@ -386,7 +386,7 @@ class AuthControllerTest extends TestCase
 
     public function testUpdateProfileUpdatesSessionName(): void
     {
-        $userId = $this->seedUser('sessupdate', 'su@test.com', 'pass123');
+        $userId = $this->seedUser('sessupdate', 'su@test.com', 'Pass1234');
         $this->loginAs($userId);
 
         $controller = $this->makeTestableAuthController();
@@ -400,12 +400,12 @@ class AuthControllerTest extends TestCase
 
     public function testChangePasswordValidatesCurrent(): void
     {
-        $userId  = $this->seedUser('changer', 'ch@test.com', 'current123');
+        $userId  = $this->seedUser('changer', 'ch@test.com', 'Current1');
         $this->loginAs($userId);
         $oldHash = $this->pdo->query("SELECT password_hash FROM user WHERE id = $userId")->fetch()->password_hash;
 
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['current_password' => 'wrongpass', 'new_password' => 'newpass123']);
+        $controller->setInput(['current_password' => 'Wrongpas1', 'new_password' => 'Newpass12']);
         $this->call(fn() => $controller->changePassword());
 
         $newHash = $this->pdo->query("SELECT password_hash FROM user WHERE id = $userId")->fetch()->password_hash;
@@ -415,30 +415,30 @@ class AuthControllerTest extends TestCase
 
     public function testChangePasswordSuccess(): void
     {
-        $userId = $this->seedUser('cp', 'cp@test.com', 'oldpass123');
+        $userId = $this->seedUser('cp', 'cp@test.com', 'Oldpass12');
         $this->loginAs($userId);
 
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['current_password' => 'oldpass123', 'new_password' => 'newpass123']);
+        $controller->setInput(['current_password' => 'Oldpass12', 'new_password' => 'Newpass12']);
         $this->call(fn() => $controller->changePassword());
 
         $this->assertTrue($controller->capturedResponse['success']);
         $user = $this->pdo->query("SELECT password_hash FROM user WHERE id = $userId")->fetch();
-        $this->assertTrue(password_verify('newpass123', $user->password_hash));
+        $this->assertTrue(password_verify('Newpass12', $user->password_hash));
     }
 
     public function testChangePasswordRejectsShortNewPassword(): void
     {
-        $userId = $this->seedUser('cps', 'cps@test.com', 'oldpass123');
+        $userId = $this->seedUser('cps', 'cps@test.com', 'Oldpass12');
         $this->loginAs($userId);
 
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['current_password' => 'oldpass123', 'new_password' => 'short']);
+        $controller->setInput(['current_password' => 'Oldpass12', 'new_password' => 'short']);
         $this->call(fn() => $controller->changePassword());
 
         $this->assertArrayHasKey('error', $controller->capturedResponse);
         $user = $this->pdo->query("SELECT password_hash FROM user WHERE id = $userId")->fetch();
-        $this->assertTrue(password_verify('oldpass123', $user->password_hash));
+        $this->assertTrue(password_verify('Oldpass12', $user->password_hash));
     }
 
     public function testUpdateProfileRequiresAuth(): void
@@ -454,7 +454,7 @@ class AuthControllerTest extends TestCase
     public function testChangePasswordRequiresAuth(): void
     {
         $controller = $this->makeTestableAuthController();
-        $controller->setInput(['current_password' => 'secret', 'new_password' => 'newsecret123']);
+        $controller->setInput(['current_password' => 'secret', 'new_password' => 'Newsecre1']);
         $this->call(fn() => $controller->changePassword(), $controller);
 
         $this->assertEquals(401, $controller->capturedStatus);
@@ -477,7 +477,7 @@ class AuthControllerTest extends TestCase
 
     public function testChangePasswordRejectsEmptyFields(): void
     {
-        $userId = $this->seedUser('cpempty', 'cpe@test.com', 'oldpass123');
+        $userId = $this->seedUser('cpempty', 'cpe@test.com', 'Oldpass12');
         $this->loginAs($userId);
 
         $controller = $this->makeTestableAuthController();

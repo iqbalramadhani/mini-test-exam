@@ -68,8 +68,9 @@ class AuthController
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->error('Format email salah');
         }
-        if (strlen($password) < 6) {
-            $this->error('Password minimal 6 karakter');
+        $pwError = Security::validatePasswordStrength($password);
+        if ($pwError !== null) {
+            $this->error($pwError);
         }
 
         // Check uniqueness
@@ -84,6 +85,7 @@ class AuthController
         $stmt->execute([':u' => $username, ':e' => $email, ':p' => $hash, ':n' => $username]);
         $userId = $this->db->lastInsertId();
 
+        Security::regenerateSession();
         $_SESSION['user_id'] = $userId;
         $_SESSION['username'] = $username;
         $_SESSION['name']     = $username;
@@ -104,14 +106,26 @@ class AuthController
             $this->error('Email/username dan password wajib diisi');
         }
 
+        // Rate limiting: max 5 attempts per 15 minutes per IP
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $rateLimitKey = 'login_' . $ip;
+        if (Security::isRateLimited($rateLimitKey, 5, 900)) {
+            $this->error('Terlalu banyak percobaan login. Coba lagi dalam 15 menit.', 429);
+        }
+
         $stmt = $this->db->prepare("SELECT id, username, email, password_hash, role, name FROM user WHERE (username = :id OR email = :id) AND is_active = 1");
         $stmt->execute([':id' => $identifier]);
         $user = $stmt->fetch();
 
         if (!$user || !password_verify($password, $user->password_hash)) {
+            Security::recordFailedAttempt($rateLimitKey);
             $this->error('Email/username atau password salah');
         }
 
+        // Successful login — clear rate limit
+        Security::clearRateLimit($rateLimitKey);
+
+        Security::regenerateSession();
         $_SESSION['user_id']  = $user->id;
         $_SESSION['username'] = $user->username;
         $_SESSION['name']     = $user->name;
@@ -180,8 +194,9 @@ class AuthController
         if (empty($currentPassword) || empty($newPassword)) {
             $this->error('Password saat ini dan password baru wajib diisi');
         }
-        if (strlen($newPassword) < 6) {
-            $this->error('Password baru minimal 6 karakter');
+        $pwError = Security::validatePasswordStrength($newPassword);
+        if ($pwError !== null) {
+            $this->error($pwError);
         }
 
         $stmt = $this->db->prepare("SELECT password_hash FROM user WHERE id = :id");

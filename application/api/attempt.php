@@ -137,6 +137,19 @@ class AttemptController
             $this->error('Attempt ini sudah selesai dikumpulkan', 400);
         }
 
+        // Enforce time limit (with 1-minute tolerance for network latency)
+        if ($attempt->time_limit_minutes > 0) {
+            $startedAt = new DateTime($attempt->started_at);
+            $now = new DateTime();
+            $elapsedMinutes = ($now->getTimestamp() - $startedAt->getTimestamp()) / 60;
+            if ($elapsedMinutes > ($attempt->time_limit_minutes + 1)) {
+                // Auto-finish the attempt as expired
+                $stmt = $this->db->prepare("UPDATE attempt SET finished_at = CURRENT_TIMESTAMP, score = 0 WHERE id = :id");
+                $stmt->execute([':id' => $attemptId]);
+                $this->error('Waktu ujian sudah habis', 400);
+            }
+        }
+
         $body    = $this->getJsonInput();
         $answers = $body['answers'] ?? [];
 
