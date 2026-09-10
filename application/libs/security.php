@@ -101,7 +101,10 @@ class Security
     /**
      * Validate Origin/Referer header for API CSRF protection.
      * For mutating requests (POST/PUT/DELETE), ensures the request comes
-     * from the same origin. GET/HEAD/OPTIONS are always allowed.
+     * from the same host. GET/HEAD/OPTIONS are always allowed.
+     *
+     * Compares hostnames only (ignoring port) so that local dev setups
+     * with different ports (e.g. React :5173, PHP :8000) work correctly.
      */
     public static function validateApiCsrf(): void
     {
@@ -115,14 +118,15 @@ class Security
         $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
         $referer = $_SERVER['HTTP_REFERER'] ?? null;
 
-        // Determine the expected host
-        $expectedHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+        // Determine the expected hostname (strip port from HTTP_HOST)
+        $httpHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+        $expectedHost = strtolower(parse_url('//' . $httpHost, PHP_URL_HOST) ?? $httpHost);
 
         // Check Origin header first (most reliable)
         if ($origin !== null) {
-            $parsedOrigin = parse_url($origin, PHP_URL_HOST);
-            if ($parsedOrigin !== null && $parsedOrigin === $expectedHost) {
-                return; // Valid same-origin request
+            $parsedOrigin = strtolower(parse_url($origin, PHP_URL_HOST) ?? '');
+            if ($parsedOrigin === $expectedHost) {
+                return; // Valid same-host request
             }
             // Origin present but doesn't match — reject
             http_response_code(403);
@@ -133,9 +137,9 @@ class Security
 
         // Fallback to Referer header
         if ($referer !== null) {
-            $parsedReferer = parse_url($referer, PHP_URL_HOST);
-            if ($parsedReferer !== null && $parsedReferer === $expectedHost) {
-                return; // Valid same-origin referer
+            $parsedReferer = strtolower(parse_url($referer, PHP_URL_HOST) ?? '');
+            if ($parsedReferer === $expectedHost) {
+                return; // Valid same-host referer
             }
             // Referer present but doesn't match — reject
             http_response_code(403);
