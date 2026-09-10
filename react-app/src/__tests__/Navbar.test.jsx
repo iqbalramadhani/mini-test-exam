@@ -27,10 +27,10 @@ describe('Navbar', () => {
     expect(screen.getByText('Ujian')).toBeInTheDocument()
   })
 
-  it('shows login/register links when not authenticated', () => {
+  it('shows guest input when not authenticated', () => {
     renderWithAuth(null)
-    expect(screen.getByText('Masuk')).toBeInTheDocument()
-    expect(screen.getByText('Daftar')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Nama kamu')).toBeInTheDocument()
+    expect(screen.getByText('Reset')).toBeInTheDocument()
   })
 
   it('shows profile links when authenticated', () => {

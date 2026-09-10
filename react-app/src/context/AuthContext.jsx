@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { authApi } from '../api'
