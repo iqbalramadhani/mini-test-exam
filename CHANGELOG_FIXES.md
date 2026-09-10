@@ -1,5 +1,20 @@
 # CHANGELOG — Perbaikan & Fitur MINI
 
+## Fix #17 — Submit/Get Tanpa Login + Auth & Navbar Fix
+**Tanggal:** 2026-09-10
+**Status:** ✅ LIVE
+
+| Item | Detail |
+|---|---|
+| **File** | `application/api/attempt.php`, `application/api/auth.php`, `application/api/exams.php`, `react-app/src/components/Navbar.jsx` |
+| **Masalah** | 1. `POST /api/attempts/:id/submit` dan `GET /api/attempts/:id` mengharuskan `$_SESSION['user_id']` — guest yang memulai ujian tidak bisa submit/get.<br>2. `published()` menangkap semua `Exception` (termasuk `ResponseCapturedException` dari test) → response kosong.<br>3. `auth.php` `me()` dan `exams.php` `index()` kehilangan validasi auth (`requireAuth`) — test `RequiresAuth` gagal.<br>4. Navbar frontend `Masuk`/`Daftar` hilang setelah perubahan komponen. |
+| **Akar** | 1. Filter auth hanya menggunakan `$_SESSION['user_id']` tanpa mempertimbangkan `user_id IS NULL` untuk guest.<br>2. `catch (Exception $e)` di `published()` menangkap exception response testable.<br>3. `requireAuth()` dikomentari di beberapa endpoint.<br>4. Perubahan komponen tidak di-rebuild ke `public/react-app/`. |
+| **Fix** | 1. `submit()` dan `get()` di `attempt.php`: jika `$_SESSION['user_id']` null, query pakai `user_id IS NULL` — guest bisa akses.<br>2. `published()`: ubah `catch (Exception $e)` → `catch (\PDOException $e)` agar hanya DB error yang ditangkap.<br>3. `auth.php` `me()` dan `exams.php` `index()`: kembalikan validasi auth (`requireAuth` dan `401` response).<br>4. `Navbar.jsx`: perbaiki link dan rebuild (`npm run build` → `public/react-app/`). |
+| **Verifikasi** | 1. `vendor/bin/phpunit` → 147 test OK.<br>2. `npm run test` → 12 frontend test OK.<br>3. Rebuild frontend berhasil. |
+| **Pelajaran** | Perubahan auth yang memungkinkan guest harus tetap membatasi akses berdasarkan data DB (`user_id`) — bukan hanya session. Perubahan komponen frontend perlu `npm run build` agar ter-refleksi di `public/react-app/`. |
+| **Log Keyword** | `submit`, `get`, `guest`, `Unauthorized`, `PDOException`, `requireAuth`, `Navbar`, `build` |
+| **Deploy** | `npm run build` dan `vendor/bin/phpunit` terverifikasi |
+
 ## Fix #16 — API Response 401 Unauthorized Setelah Login
 **Tanggal:** 2026-09-09
 **Status:** ✅ LIVE
