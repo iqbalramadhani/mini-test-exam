@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import Swal from 'sweetalert2'
 import { attemptApi, examApi } from '../api'
 import { useAuth } from '../context/AuthContext'
 
 export default function AvailableExams() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [exams, setExams] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -21,6 +23,27 @@ export default function AvailableExams() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [user])
+
+  const handleStartExam = (examId) => {
+    Swal.fire({
+      title: 'Pilih Mode Ujian',
+      text: 'Mode Latihan akan langsung menampilkan jawaban yang benar & pembahasan pada setiap soal.',
+      icon: 'question',
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: 'Mode Tryout',
+      denyButtonText: 'Mode Latihan',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#4f46e5',
+      denyButtonColor: '#10b981',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate(`/take/${examId}?mode=tryout`)
+      } else if (result.isDenied) {
+        navigate(`/take/${examId}?mode=practice`)
+      }
+    })
+  }
 
   if (loading) {
     return (
@@ -84,12 +107,12 @@ export default function AvailableExams() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {exam.question_count > 0 ? (
-                      <Link
-                        to={`/take/${exam.id}`}
+                      <button
+                        onClick={() => handleStartExam(exam.id)}
                         className="text-sm bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all font-medium inline-block"
                       >
                         Mulai Ujian
-                      </Link>
+                      </button>
                     ) : (
                       <span className="text-xs text-slate-500 bg-slate-100 border border-slate-200 px-4 py-2.5 rounded-xl font-medium inline-block">
                         Belum ada soal

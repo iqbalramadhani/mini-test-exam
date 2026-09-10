@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import Swal from 'sweetalert2'
 import { attemptApi } from '../api'
 import FormattedText from '../components/FormattedText'
@@ -11,7 +11,11 @@ export default function TakeExam() {
   const navigate = useNavigate()
   const timerRef = useRef(null)
 
+  const [searchParams] = useSearchParams()
+  const initialMode = searchParams.get('mode') || 'tryout'
+
   const [exam, setExam] = useState(null)
+  const [examMode, setExamMode] = useState('tryout')
   const [questions, setQuestions] = useState([])
   const [answers, setAnswers] = useState({})
   const [attemptId, setAttemptId] = useState(null)
@@ -22,13 +26,20 @@ export default function TakeExam() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
 
   useEffect(() => {
-    attemptApi.start(parseInt(id))
+    attemptApi.start(parseInt(id), { mode: initialMode })
       .then((data) => {
         setExam(data.exam)
         setQuestions(data.questions)
         setAttemptId(data.attempt_id)
-        const totalSeconds = (data.exam.time_limit_minutes || 60) * 60
-        setTimeLeft(totalSeconds)
+        setExamMode(data.mode || 'tryout')
+        
+        if (data.mode === 'practice') {
+          setTimeLeft(null)
+        } else {
+          const totalSeconds = (data.exam.time_limit_minutes || 60) * 60
+          setTimeLeft(totalSeconds)
+        }
+        
         setLoading(false)
       })
       .catch((err) => {
@@ -40,6 +51,9 @@ export default function TakeExam() {
 
 
   const handleSelectAnswer = (questionId, choiceIndex) => {
+    if (examMode === 'practice' && answers[questionId] !== undefined) {
+      return // Lock answer in practice mode
+    }
     setAnswers((prev) => ({ ...prev, [questionId]: choiceIndex }))
   }
 
@@ -131,8 +145,8 @@ export default function TakeExam() {
             <p className="text-xs text-slate-400 mt-0.5">{questions.length} soal</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className={`text-lg font-mono font-bold ${timeLeft !== null && timeLeft < 60 ? 'text-red-500' : 'text-slate-700'}`}>
-              {formatTime(timeLeft ?? 0)}
+            <div className={`text-lg font-mono font-bold ${examMode === 'practice' ? 'text-indigo-600 text-sm bg-indigo-50 px-3 py-1.5 rounded-lg' : timeLeft !== null && timeLeft < 60 ? 'text-red-500' : 'text-slate-700'}`}>
+              {examMode === 'practice' ? 'Mode Latihan' : formatTime(timeLeft ?? 0)}
             </div>
               <button
                 onClick={() => {
@@ -234,32 +248,71 @@ export default function TakeExam() {
                 </div>
 
                 <div className="space-y-3 ml-13 mb-8 flex-1 pl-1">
-                  {q.choices?.map((choice, ci) => (
-                    <button
-                      key={choice.id}
-                      onClick={() => handleSelectAnswer(q.id, ci)}
-                      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border text-sm text-left transition-all ${
-                        answers[q.id] === ci
-                          ? 'border-indigo-500 bg-indigo-50/80 text-indigo-800 shadow-sm ring-1 ring-indigo-200'
-                          : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm text-slate-700'
-                      }`}
-                    >
-                      <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
-                        answers[q.id] === ci
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-slate-100 text-slate-500 border border-slate-200'
-                      }`}>
-                        {LABELS[ci]}
-                      </span>
-                      <span className="flex-1 text-[15px]"><FormattedText>{choice.text}</FormattedText></span>
-                      {answers[q.id] === ci && (
-                        <svg className="w-5 h-5 text-indigo-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
+                  {q.choices?.map((choice, ci) => {
+                    const isSelected = answers[q.id] === ci
+                    let buttonClass = ''
+                    let labelClass = ''
+                    
+                    if (examMode === 'practice' && answers[q.id] !== undefined) {
+                      const isCorrectChoice = q.correct_choice_index == ci
+                      if (isCorrectChoice) {
+                        buttonClass = 'border-green-500 bg-green-50/80 text-green-800 shadow-sm ring-1 ring-green-200 z-10'
+                        labelClass = 'bg-green-600 text-white shadow-sm'
+                      } else if (isSelected) {
+                        buttonClass = 'border-red-500 bg-red-50/80 text-red-800 shadow-sm ring-1 ring-red-200'
+                        labelClass = 'bg-red-600 text-white shadow-sm'
+                      } else {
+                        buttonClass = 'border-slate-200 bg-white text-slate-400 opacity-60 cursor-not-allowed'
+                        labelClass = 'bg-slate-100 text-slate-400 border border-slate-200'
+                      }
+                    } else {
+                      buttonClass = isSelected
+                        ? 'border-indigo-500 bg-indigo-50/80 text-indigo-800 shadow-sm ring-1 ring-indigo-200'
+                        : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm text-slate-700'
+                      labelClass = isSelected
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-500 border border-slate-200'
+                    }
+
+                    return (
+                      <button
+                        key={choice.id}
+                        onClick={() => handleSelectAnswer(q.id, ci)}
+                        className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border text-sm text-left transition-all ${buttonClass}`}
+                      >
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${labelClass}`}>
+                          {LABELS[ci]}
+                        </span>
+                        <span className="flex-1 text-[15px]"><FormattedText>{choice.text}</FormattedText></span>
+                        {isSelected && examMode !== 'practice' && (
+                          <svg className="w-5 h-5 text-indigo-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        {examMode === 'practice' && answers[q.id] !== undefined && q.correct_choice_index == ci && (
+                          <svg className="w-5 h-5 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                        {examMode === 'practice' && answers[q.id] !== undefined && isSelected && q.correct_choice_index != ci && (
+                          <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
+
+                {examMode === 'practice' && answers[q.id] !== undefined && (q.explanation || q.keterangan) && (
+                  <div className="ml-13 mb-8 bg-blue-50/50 border border-blue-100 rounded-xl p-5">
+                    <h4 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">Pembahasan</h4>
+                    <div className="text-sm text-slate-700">
+                      {q.explanation && <FormattedText>{q.explanation}</FormattedText>}
+                      {q.keterangan && <div className="mt-2 text-slate-600 bg-white/60 p-3 rounded-lg border border-slate-100 text-sm whitespace-pre-wrap">{q.keterangan}</div>}
+                    </div>
+                  </div>
+                )}
 
                 {/* Pagination Controls */}
                 <div className="flex items-center justify-between border-t border-slate-100 pt-6 mt-auto">

@@ -81,6 +81,12 @@ class AttemptController
             $this->error('Unauthorized', 401);
         }
 
+        $body = $this->getJsonInput();
+        $mode = $body['mode'] ?? 'tryout';
+        if (!in_array($mode, ['practice', 'tryout'])) {
+            $mode = 'tryout';
+        }
+
         $stmt = $this->db->prepare("SELECT id, title, description, time_limit_minutes FROM exam WHERE id = :id AND is_published = 1");
         $stmt->execute([':id' => $examId]);
         $exam = $stmt->fetch();
@@ -100,16 +106,21 @@ class AttemptController
             $cStmt = $this->db->prepare("SELECT id, label, text FROM choice WHERE question_id = :qid ORDER BY id ASC");
             $cStmt->execute([':qid' => $q->id]);
             $q->choices = $cStmt->fetchAll();
-            unset($q->correct_choice_index);
+            if ($mode !== 'practice') {
+                unset($q->correct_choice_index);
+                unset($q->explanation);
+                unset($q->keterangan);
+            }
         }
         unset($q);
 
-        $stmt = $this->db->prepare("INSERT INTO attempt (exam_id, user_id) VALUES (:eid, :uid)");
-        $stmt->execute([':eid' => $examId, ':uid' => $_SESSION['user_id']]);
+        $stmt = $this->db->prepare("INSERT INTO attempt (exam_id, user_id, mode) VALUES (:eid, :uid, :mode)");
+        $stmt->execute([':eid' => $examId, ':uid' => $_SESSION['user_id'], ':mode' => $mode]);
         $attemptId = $this->db->lastInsertId();
 
         $this->respond([
             'attempt_id' => (int)$attemptId,
+            'mode' => $mode,
             'exam' => [
                 'id' => $exam->id,
                 'title' => $exam->title,

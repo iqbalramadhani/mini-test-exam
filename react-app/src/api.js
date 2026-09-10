@@ -41,7 +41,7 @@ export const examApi = {
 
 export const attemptApi = {
   listPublished: () => request('/attempts/published'),
-  start: (examId) => request(`/attempts/start/${examId}`, { method: 'POST' }),
+  start: (examId, data = {}) => request(`/attempts/start/${examId}`, { method: 'POST', body: JSON.stringify(data) }),
   submit: (attemptId, answers) => request(`/attempts/${attemptId}/submit`, {
     method: 'POST',
     body: JSON.stringify({ answers }),
