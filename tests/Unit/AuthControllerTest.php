@@ -75,6 +75,8 @@ class AuthControllerTest extends TestCase
                 role VARCHAR(20) NOT NULL DEFAULT 'user',
                 name VARCHAR(100) NOT NULL DEFAULT '',
                 is_active INTEGER NOT NULL DEFAULT 1,
+                confirmation_token VARCHAR(64) NULL,
+                token_expires_at TIMESTAMP NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ");
@@ -98,7 +100,7 @@ class AuthControllerTest extends TestCase
 
     // ─── Register ────────────────────────────────────────────────────────────
 
-    public function testRegisterCreatesUserAndStartsSession(): void
+    public function testRegisterCreatesUserAndRequiresEmailVerification(): void
     {
         $before     = $this->pdo->query("SELECT COUNT(*) FROM user")->fetchColumn();
         $controller = $this->makeTestableAuthController();
@@ -113,19 +115,19 @@ class AuthControllerTest extends TestCase
         $this->assertTrue(password_verify('Password1', $user->password_hash));
         $this->assertEquals('new@example.com', $user->email);
         $this->assertEquals('user', $user->role);
+        $this->assertEquals(0, $user->is_active); // User should be inactive initially
+        $this->assertNotNull($user->confirmation_token);
         $this->assertEquals(200, $controller->capturedStatus);
-        $this->assertEquals('newuser', $controller->capturedResponse['user']['username']);
+        $this->assertArrayHasKey('message', $controller->capturedResponse);
     }
 
-    public function testRegisterSetsSessionAfterSuccess(): void
+    public function testRegisterDoesNotSetSession(): void
     {
         $controller = $this->makeTestableAuthController();
         $controller->setInput(['username' => 'sessionuser', 'email' => 'sess@example.com', 'password' => 'Password1']);
         $this->call(fn() => $controller->register());
 
-        $this->assertArrayHasKey('user_id', $_SESSION);
-        $this->assertEquals('sessionuser', $_SESSION['username']);
-        $this->assertEquals('user', $_SESSION['role']);
+        $this->assertArrayNotHasKey('user_id', $_SESSION);
     }
 
     public function testRegisterRejectsShortUsername(): void

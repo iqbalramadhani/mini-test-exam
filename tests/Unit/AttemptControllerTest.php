@@ -99,7 +99,9 @@ class AttemptControllerTest extends TestCase
                 password_hash VARCHAR(255) NOT NULL,
                 role VARCHAR(20) NOT NULL DEFAULT 'user',
                 name VARCHAR(100) NOT NULL DEFAULT '',
-                is_active INTEGER NOT NULL DEFAULT 1
+                is_active INTEGER NOT NULL DEFAULT 1,
+                confirmation_token VARCHAR(64) NULL,
+                token_expires_at TIMESTAMP NULL
             )
         ");
         $this->pdo->exec("
@@ -142,7 +144,8 @@ class AttemptControllerTest extends TestCase
                 user_id INTEGER NOT NULL,
                 started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 finished_at TIMESTAMP NULL,
-                score DECIMAL(5,2) NULL
+                score DECIMAL(5,2) NULL,
+                mode VARCHAR(20) DEFAULT 'tryout'
             )
         ");
         $this->pdo->exec("

@@ -50,6 +50,8 @@ abstract class DbTestCase extends BaseTestCase
                 role VARCHAR(20) NOT NULL DEFAULT 'user',
                 name VARCHAR(100) NOT NULL DEFAULT '',
                 is_active INTEGER NOT NULL DEFAULT 1,
+                confirmation_token VARCHAR(64) NULL,
+                token_expires_at TIMESTAMP NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -99,7 +101,8 @@ abstract class DbTestCase extends BaseTestCase
                 user_id INTEGER NOT NULL,
                 started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 finished_at TIMESTAMP NULL,
-                score DECIMAL(5,2) NULL
+                score DECIMAL(5,2) NULL,
+                mode VARCHAR(20) DEFAULT 'tryout'
             )
         ");
 

@@ -21,6 +21,7 @@ if (!defined('ENVIRONMENT')) define('ENVIRONMENT', 'testing');
 require_once APP . 'libs/env.php';
 require_once APP . 'libs/helper.php';
 require_once APP . 'libs/security.php';
+require_once APP . 'libs/mailer.php';
 require_once APP . 'model/model.php';
 
 // Load ResponseCapturedException FIRST — it is used by stubs below and by TestableControllers
@@ -67,3 +68,9 @@ require APP . 'api/attempt.php';
 
 // Load testable controller subclasses
 require_once __DIR__ . '/Unit/TestableControllers.php';
+if (!defined('SMTP_HOST')) define('SMTP_HOST', getenv('SMTP_HOST') ?: 'sandbox.smtp.mailtrap.io');
+if (!defined('SMTP_PORT')) define('SMTP_PORT', getenv('SMTP_PORT') ?: 2525);
+if (!defined('SMTP_USER')) define('SMTP_USER', getenv('SMTP_USER') ?: '');
+if (!defined('SMTP_PASS')) define('SMTP_PASS', getenv('SMTP_PASS') ?: '');
+if (!defined('SMTP_FROM_EMAIL')) define('SMTP_FROM_EMAIL', getenv('SMTP_FROM_EMAIL') ?: 'no-reply@test.com');
+if (!defined('SMTP_FROM_NAME')) define('SMTP_FROM_NAME', getenv('SMTP_FROM_NAME') ?: 'Test Exam');
