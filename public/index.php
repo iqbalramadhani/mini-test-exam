@@ -35,6 +35,8 @@ require APP . 'libs/helper.php';
 require APP . 'core/application.php';
 require APP . 'core/controller.php';
 require APP . 'libs/security.php';
+require APP . 'core/error_handler.php';
+require APP . 'libs/mailer.php';
 
 // Set security headers on every request
 Security::setHeaders();

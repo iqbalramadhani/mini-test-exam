@@ -81,18 +81,49 @@ class AuthController
         }
 
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $this->db->prepare("INSERT INTO user (username, email, password_hash, role, name) VALUES (:u, :e, :p, 'user', :n)");
-        $stmt->execute([':u' => $username, ':e' => $email, ':p' => $hash, ':n' => $username]);
+        $token = bin2hex(random_bytes(32));
+        $expiresAt = date('Y-m-d H:i:s', time() + 86400);
+
+        $stmt = $this->db->prepare("INSERT INTO user (username, email, password_hash, role, name, is_active, confirmation_token, token_expires_at) VALUES (:u, :e, :p, 'user', :n, 0, :token, :expires)");
+        $stmt->execute([
+            ':u' => $username, 
+            ':e' => $email, 
+            ':p' => $hash, 
+            ':n' => $username,
+            ':token' => $token,
+            ':expires' => $expiresAt
+        ]);
         $userId = $this->db->lastInsertId();
 
-        Security::regenerateSession();
-        $_SESSION['user_id'] = $userId;
-        $_SESSION['username'] = $username;
-        $_SESSION['name']     = $username;
-        $_SESSION['email']    = $email;
-        $_SESSION['role']     = 'user';
+        $mailer = new Mailer();
+        $mailer->sendConfirmationEmail($email, $username, $token);
 
-        $this->respond(['user' => ['id' => $userId, 'username' => $username, 'name' => $username, 'email' => $email, 'role' => 'user']]);
+        $this->respond(['message' => 'Registrasi berhasil. Silakan cek email Anda untuk memverifikasi akun.']);
+    }
+
+    public function verifyEmail(): bool
+    {
+        $token = $_GET['token'] ?? '';
+        if (empty($token)) {
+            $this->error('Token tidak valid');
+        }
+
+        $stmt = $this->db->prepare("SELECT id, token_expires_at FROM user WHERE confirmation_token = :token AND is_active = 0");
+        $stmt->execute([':token' => $token]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            $this->error('Token tidak valid atau akun sudah aktif');
+        }
+
+        if (strtotime($user->token_expires_at) < time()) {
+            $this->error('Token sudah kedaluwarsa');
+        }
+
+        $stmt = $this->db->prepare("UPDATE user SET is_active = 1, confirmation_token = NULL, token_expires_at = NULL WHERE id = :id");
+        $stmt->execute([':id' => $user->id]);
+
+        $this->respond(['success' => true, 'message' => 'Email berhasil diverifikasi. Silakan login.']);
     }
 
     public function login(): bool

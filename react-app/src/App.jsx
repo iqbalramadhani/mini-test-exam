@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import VerifyEmail from './pages/VerifyEmail'
 import Dashboard from './pages/Dashboard'
 import ExamBuilder from './pages/ExamBuilder'
 import AvailableExams from './pages/AvailableExams'
@@ -32,6 +33,7 @@ function AppRoutes() {
         <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" replace />} />
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           path="/dashboard"
           element={

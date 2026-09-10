@@ -18,6 +18,7 @@ async function request(endpoint, options = {}) {
 
 export const authApi = {
   register: (data) => request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+  verifyEmail: (token) => request(`/auth/verify?token=${token}`),
   login: (data) => request('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
   me: () => request('/auth/me'),
   logout: () => request('/auth/logout', { method: 'POST' }),

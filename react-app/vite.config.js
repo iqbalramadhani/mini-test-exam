@@ -15,4 +15,16 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     globals: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          markdown: ['react-markdown', 'remark-math', 'rehype-katex'],
+          math: ['katex']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000,
+  }
 })

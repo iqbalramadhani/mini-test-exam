@@ -22,6 +22,13 @@ if (ENVIRONMENT == 'development' || ENVIRONMENT == 'dev') {
     error_reporting(0);
     ini_set("display_errors", 0);
 }
+// Enable logging
+ini_set("log_errors", 1);
+$logDir = ROOT . 'tmp/logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0777, true);
+}
+ini_set("error_log", $logDir . '/php_errors.log');
 
 /**
  * Configuration for: URL
@@ -65,3 +72,13 @@ if (!defined('DB_USER')) define('DB_USER', getenv('DB_USER') ?: 'root');
 if (!defined('DB_PASS')) define('DB_PASS', getenv('DB_PASS') ?: '');
 if (!defined('DB_CHARSET')) define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');
 if (!defined('DB_PORT')) define('DB_PORT', (int) (getenv('DB_PORT') ?: 3306));
+
+/**
+ * Configuration for: SMTP (Email)
+ */
+if (!defined('SMTP_HOST')) define('SMTP_HOST', getenv('SMTP_HOST') ?: '127.0.0.1');
+if (!defined('SMTP_PORT')) define('SMTP_PORT', (int) (getenv('SMTP_PORT') ?: 2525));
+if (!defined('SMTP_USER')) define('SMTP_USER', getenv('SMTP_USER') ?: '');
+if (!defined('SMTP_PASS')) define('SMTP_PASS', getenv('SMTP_PASS') ?: '');
+if (!defined('SMTP_FROM_EMAIL')) define('SMTP_FROM_EMAIL', getenv('SMTP_FROM_EMAIL') ?: 'noreply@localhost');
+if (!defined('SMTP_FROM_NAME')) define('SMTP_FROM_NAME', getenv('SMTP_FROM_NAME') ?: 'System');

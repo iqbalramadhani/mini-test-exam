@@ -23,7 +23,6 @@ export function AuthProvider({ children }) {
 
   const register = async (username, email, password) => {
     const data = await authApi.register({ username, email, password })
-    setUser(data.user)
     return data
   }
 

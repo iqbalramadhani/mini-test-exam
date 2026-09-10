@@ -10,6 +10,7 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -17,12 +18,29 @@ export default function Register() {
     setLoading(true)
     try {
       await register(username, email, password)
-      navigate('/dashboard')
+      setSuccess(true)
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-cyan-50 px-4">
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl shadow-indigo-200/50 border border-white p-8 w-full max-w-md transition-all text-center">
+          <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Registrasi Berhasil!</h1>
+          <p className="text-slate-500 text-sm mb-6">Kami telah mengirimkan tautan verifikasi ke email Anda. Silakan periksa kotak masuk atau folder spam Anda untuk mengaktifkan akun sebelum login.</p>
+          <Link to="/login" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-xl transition-all shadow-md">
+            Kembali ke Login
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (

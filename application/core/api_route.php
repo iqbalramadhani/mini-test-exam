@@ -54,6 +54,9 @@ if (!$handled && $parts[0] === 'auth') {
         case 'register':
             if ($method === 'POST') { $handled = $auth->register(); break; }
             apiJsonError('Method not allowed', 405);
+        case 'verify':
+            if ($method === 'GET') { $handled = $auth->verifyEmail(); break; }
+            apiJsonError('Method not allowed', 405);
         case 'login':
             if ($method === 'POST') { $handled = $auth->login(); break; }
             apiJsonError('Method not allowed', 405);
