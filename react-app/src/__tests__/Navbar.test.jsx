@@ -27,9 +27,9 @@ describe('Navbar', () => {
     expect(screen.getByText('Ujian')).toBeInTheDocument()
   })
 
-  it('shows guest input when not authenticated', () => {
+  it('shows guest name when not authenticated', () => {
     renderWithAuth(null)
-    expect(screen.getByPlaceholderText('Nama kamu')).toBeInTheDocument()
+    expect(screen.getByText('Tamu')).toBeInTheDocument()
     expect(screen.getByText('Reset')).toBeInTheDocument()
   })
 
