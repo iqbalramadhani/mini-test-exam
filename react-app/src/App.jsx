@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
+import Welcome from './pages/Welcome'
 import VerifyEmail from './pages/VerifyEmail'
 import Dashboard from './pages/Dashboard'
 import ExamBuilder from './pages/ExamBuilder'
@@ -30,7 +31,7 @@ function AppRoutes() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 text-slate-800">
       {!isTakeExam && <Navbar />}
       <Routes>
-        <Route path="/" element={<Navigate to="/exams" replace />} />
+        <Route path="/" element={<Welcome />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route
           path="/dashboard"

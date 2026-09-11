@@ -70,8 +70,8 @@ export default function TakeExam() {
       const result = await attemptApi.submit(attemptId, answerList)
       Swal.fire({
         title: 'Ujian Selesai!',
-        html: `Skor kamu: <strong>${result.score}</strong> / 100<br><span class="text-sm text-slate-500">${result.correct} dari ${result.total} soal benar</span>`,
-        icon: result.score >= 70 ? 'success' : 'info',
+        html: `Skor kamu: <strong>${result.score}</strong> / ${result.max_score ?? 100}<br><span class="text-sm text-slate-500">${result.correct} dari ${result.total} soal benar</span>`,
+        icon: (result.score / (result.max_score ?? 100)) >= 0.7 ? 'success' : 'info',
         confirmButtonText: 'Lihat Hasil',
       }).then(() => {
         navigate(`/result/${attemptId}`)

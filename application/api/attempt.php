@@ -151,8 +151,8 @@ class AttemptController
             $this->error('Attempt ini sudah selesai dikumpulkan', 400);
         }
 
-        // Enforce time limit (with 1-minute tolerance for network latency)
-        if ($attempt->time_limit_minutes > 0) {
+        // Enforce time limit (with 1-minute tolerance for network latency) only if not practice mode
+        if ($attempt->mode !== 'practice' && $attempt->time_limit_minutes > 0) {
             $startedAt = new DateTime($attempt->started_at);
             $now = new DateTime();
             $elapsedMinutes = ($now->getTimestamp() - $startedAt->getTimestamp()) / 60;
@@ -251,7 +251,24 @@ class AttemptController
             $this->error('Gagal menyimpan jawaban');
         }
 
-        $this->respond(['success' => true, 'score' => $totalScore, 'correct' => $correctCount, 'total' => $qCount]);
+        $maxScore = 0;
+        foreach ($questions as $q) {
+            $hasChoiceScores = false;
+            $maxChoiceScore = 0;
+            if (isset($choiceScores[$q->id])) {
+                $maxChoiceScore = max($choiceScores[$q->id]);
+                if ($maxChoiceScore > 0) {
+                    $hasChoiceScores = true;
+                }
+            }
+            if ($hasChoiceScores) {
+                $maxScore += $maxChoiceScore;
+            } else {
+                $maxScore += (int)($q->weight ?? 1);
+            }
+        }
+
+        $this->respond(['success' => true, 'score' => $totalScore, 'max_score' => $maxScore, 'correct' => $correctCount, 'total' => $qCount]);
     }
 
     public function get(int $attemptId): bool
@@ -303,11 +320,33 @@ class AttemptController
             $duration = $start->diff($end)->h * 60 + $start->diff($end)->i + ($start->diff($end)->s / 60);
         }
 
+        // Calculate max possible score
+        $qStmt = $this->db->prepare("SELECT id, weight FROM question WHERE exam_id = :eid");
+        $qStmt->execute([':eid' => $attempt->exam_id]);
+        $questions = $qStmt->fetchAll();
+        
+        $cStmt = $this->db->prepare("SELECT c.question_id, MAX(c.score) as max_score FROM choice c JOIN question q ON c.question_id = q.id WHERE q.exam_id = :eid GROUP BY c.question_id");
+        $cStmt->execute([':eid' => $attempt->exam_id]);
+        $choiceMax = [];
+        foreach ($cStmt->fetchAll() as $row) {
+            $choiceMax[$row->question_id] = (int)$row->max_score;
+        }
+
+        $maxScore = 0;
+        foreach ($questions as $q) {
+            if (!empty($choiceMax[$q->id]) && $choiceMax[$q->id] > 0) {
+                $maxScore += $choiceMax[$q->id];
+            } else {
+                $maxScore += (int)($q->weight ?? 1);
+            }
+        }
+
         $this->respond([
             'attempt' => [
                 'id' => $attempt->id,
                 'exam_id' => $attempt->exam_id,
                 'score' => $attempt->score,
+                'max_score' => $maxScore,
                 'started_at' => $attempt->started_at,
                 'finished_at' => $attempt->finished_at,
                 'duration_minutes' => round($duration ?? 0, 2),

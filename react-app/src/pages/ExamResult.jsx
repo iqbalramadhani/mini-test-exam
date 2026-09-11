@@ -67,8 +67,8 @@ export default function ExamResult() {
           <div className="relative z-10">
             <p className="text-sm font-semibold text-indigo-600 mb-2 tracking-wider uppercase">Hasil Ujian</p>
             <div className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-4 drop-shadow-sm">
-              {score.toFixed(2)}
-              <span className="text-3xl text-slate-400 font-semibold align-baseline"> / 100</span>
+              {score % 1 === 0 ? score : score.toFixed(2)}
+              <span className="text-3xl text-slate-400 font-semibold align-baseline"> / {attempt.max_score ?? 100}</span>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm mt-6 bg-white/50 inline-flex px-6 py-3 rounded-2xl border border-slate-100">
               <span className="text-emerald-600 font-semibold flex items-center gap-1.5">
@@ -87,9 +87,9 @@ export default function ExamResult() {
             </div>
             <div className="mt-6">
               <span className={`inline-block px-5 py-2 rounded-full text-sm font-bold shadow-sm ${
-                score >= 70 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-amber-400 to-orange-400 text-white'
+                (score / (attempt.max_score ?? 100)) >= 0.7 ? 'bg-gradient-to-r from-emerald-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-amber-400 to-orange-400 text-white'
               }`}>
-                {score >= 70 ? 'Lulus' : 'Tidak Lulus'}
+                {(score / (attempt.max_score ?? 100)) >= 0.7 ? 'Lulus' : 'Tidak Lulus'}
               </span>
             </div>
           </div>
