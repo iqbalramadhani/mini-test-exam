@@ -86,6 +86,7 @@ class AttemptController
         if (!in_array($mode, ['practice', 'tryout'])) {
             $mode = 'tryout';
         }
+        $limit = isset($body['limit']) ? (int)$body['limit'] : null;
 
         $stmt = $this->db->prepare("SELECT id, title, description, time_limit_minutes FROM exam WHERE id = :id AND is_published = 1");
         $stmt->execute([':id' => $examId]);
@@ -97,6 +98,11 @@ class AttemptController
         $qStmt = $this->db->prepare("SELECT * FROM question WHERE exam_id = :eid ORDER BY sort_order ASC");
         $qStmt->execute([':eid' => $examId]);
         $questions = $qStmt->fetchAll();
+
+        if ($mode === 'practice' && $limit > 0 && $limit < count($questions)) {
+            shuffle($questions);
+            $questions = array_slice($questions, 0, $limit);
+        }
 
         if (count($questions) === 0) {
             $this->error('Ujian ini belum memiliki soal', 400);
@@ -198,7 +204,7 @@ class AttemptController
 
         $this->db->beginTransaction();
         try {
-            $qCount = count($questions);
+            $qCount = count($answers);
             $correctCount = 0;
             $totalScore = 0;
 
@@ -252,11 +258,12 @@ class AttemptController
         }
 
         $maxScore = 0;
-        foreach ($questions as $q) {
+        foreach ($answers as $ans) {
+            $qid = (int)$ans['question_id'];
             $hasChoiceScores = false;
             $maxChoiceScore = 0;
-            if (isset($choiceScores[$q->id])) {
-                $maxChoiceScore = max($choiceScores[$q->id]);
+            if (isset($choiceScores[$qid])) {
+                $maxChoiceScore = max($choiceScores[$qid]);
                 if ($maxChoiceScore > 0) {
                     $hasChoiceScores = true;
                 }
@@ -264,7 +271,7 @@ class AttemptController
             if ($hasChoiceScores) {
                 $maxScore += $maxChoiceScore;
             } else {
-                $maxScore += (int)($q->weight ?? 1);
+                $maxScore += (int)($weightMap[$qid] ?? 1);
             }
         }
 
@@ -320,10 +327,14 @@ class AttemptController
             $duration = $start->diff($end)->h * 60 + $start->diff($end)->i + ($start->diff($end)->s / 60);
         }
 
-        // Calculate max possible score
+        // Calculate max possible score for the attempted questions
         $qStmt = $this->db->prepare("SELECT id, weight FROM question WHERE exam_id = :eid");
         $qStmt->execute([':eid' => $attempt->exam_id]);
         $questions = $qStmt->fetchAll();
+        $weightMap = [];
+        foreach ($questions as $q) {
+            $weightMap[$q->id] = (int)($q->weight ?? 1);
+        }
         
         $cStmt = $this->db->prepare("SELECT c.question_id, MAX(c.score) as max_score FROM choice c JOIN question q ON c.question_id = q.id WHERE q.exam_id = :eid GROUP BY c.question_id");
         $cStmt->execute([':eid' => $attempt->exam_id]);
@@ -333,11 +344,12 @@ class AttemptController
         }
 
         $maxScore = 0;
-        foreach ($questions as $q) {
-            if (!empty($choiceMax[$q->id]) && $choiceMax[$q->id] > 0) {
-                $maxScore += $choiceMax[$q->id];
+        foreach ($answers as $ans) {
+            $qid = $ans->question_id;
+            if (!empty($choiceMax[$qid]) && $choiceMax[$qid] > 0) {
+                $maxScore += $choiceMax[$qid];
             } else {
-                $maxScore += (int)($q->weight ?? 1);
+                $maxScore += $weightMap[$qid] ?? 1;
             }
         }
 

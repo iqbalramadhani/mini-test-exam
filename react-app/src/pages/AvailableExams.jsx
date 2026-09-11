@@ -24,7 +24,7 @@ export default function AvailableExams() {
       .finally(() => setLoading(false))
   }, [user])
 
-  const handleStartExam = (examId) => {
+  const handleStartExam = (examId, totalQuestions) => {
     Swal.fire({
       title: 'Pilih Mode Ujian',
       text: 'Mode Latihan akan langsung menampilkan jawaban yang benar & pembahasan pada setiap soal.',
@@ -40,7 +40,28 @@ export default function AvailableExams() {
       if (result.isConfirmed) {
         navigate(`/take/${examId}?mode=tryout`)
       } else if (result.isDenied) {
-        navigate(`/take/${examId}?mode=practice`)
+        Swal.fire({
+          title: 'Jumlah Soal Latihan',
+          input: 'number',
+          inputLabel: `Maksimal ${totalQuestions} soal (kosongkan untuk semua soal)`,
+          inputPlaceholder: 'Contoh: 10',
+          inputAttributes: {
+            min: 1,
+            max: totalQuestions,
+          },
+          showCancelButton: true,
+          confirmButtonText: 'Mulai',
+          cancelButtonText: 'Batal',
+        }).then((res) => {
+          if (res.isConfirmed) {
+            let limit = parseInt(res.value)
+            if (isNaN(limit) || limit <= 0) {
+              navigate(`/take/${examId}?mode=practice`)
+            } else {
+              navigate(`/take/${examId}?mode=practice&limit=${limit}`)
+            }
+          }
+        })
       }
     })
   }
@@ -108,7 +129,7 @@ export default function AvailableExams() {
                   <div className="flex items-center gap-2 shrink-0">
                     {exam.question_count > 0 ? (
                       <button
-                        onClick={() => handleStartExam(exam.id)}
+                        onClick={() => handleStartExam(exam.id, exam.question_count)}
                         className="text-sm bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all font-medium inline-block"
                       >
                         Mulai Ujian
