@@ -55,8 +55,8 @@ export default function VerifyEmail() {
         </p>
 
         {status !== 'loading' && (
-          <Link to="/login" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-xl transition-all shadow-md">
-            Lanjut ke Login
+          <Link to="/" className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded-xl transition-all shadow-md">
+            Kembali ke Beranda
           </Link>
         )}
       </div>
