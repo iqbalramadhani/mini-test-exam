@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+cd react-app && npm run lint && npm test
