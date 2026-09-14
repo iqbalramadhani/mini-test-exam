@@ -9,28 +9,48 @@ export default function Dashboard() {
   const [newTitle, setNewTitle] = useState('')
   const [newDesc, setNewDesc] = useState('')
   const [newTime, setNewTime] = useState(60)
+  const [newRandomized, setNewRandomized] = useState(0)
   const [editingExam, setEditingExam] = useState(null)
   const [editTitle, setEditTitle] = useState('')
   const [editDesc, setEditDesc] = useState('')
   const [editTime, setEditTime] = useState(60)
+  const [editRandomized, setEditRandomized] = useState(0)
   const [error, setError] = useState('')
 
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+
   useEffect(() => {
-    examApi.list()
-      .then((data) => setExams(data.exams))
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch])
+
+  useEffect(() => {
+    examApi.list({ page, limit: 10, search: debouncedSearch })
+      .then((data) => {
+        setExams(data.exams)
+        setTotalPages(data.total_pages || 1)
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [page, debouncedSearch])
 
   const handleCreate = async (e) => {
     e.preventDefault()
     if (!newTitle.trim()) return
     try {
-      const data = await examApi.create({ title: newTitle, description: newDesc, time_limit_minutes: newTime })
+      const data = await examApi.create({ title: newTitle, description: newDesc, time_limit_minutes: newTime, is_randomized: newRandomized ? 1 : 0 })
       setExams([data.exam, ...exams])
       setNewTitle('')
       setNewDesc('')
       setNewTime(60)
+      setNewRandomized(0)
       setShowCreate(false)
     } catch (err) {
       setError(err.message)
@@ -57,14 +77,15 @@ export default function Dashboard() {
     setEditTitle(exam.title)
     setEditDesc(exam.description || '')
     setEditTime(exam.time_limit_minutes)
+    setEditRandomized(exam.is_randomized || 0)
   }
 
   const handleUpdate = async (e) => {
     e.preventDefault()
     if (!editTitle.trim()) return
     try {
-      await examApi.update(editingExam.id, { title: editTitle, description: editDesc, time_limit_minutes: editTime })
-      setExams(exams.map((ex) => ex.id === editingExam.id ? { ...ex, title: editTitle, description: editDesc, time_limit_minutes: editTime } : ex))
+      await examApi.update(editingExam.id, { title: editTitle, description: editDesc, time_limit_minutes: editTime, is_published: editingExam.is_published, is_randomized: editRandomized ? 1 : 0 })
+      setExams(exams.map((ex) => ex.id === editingExam.id ? { ...ex, title: editTitle, description: editDesc, time_limit_minutes: editTime, is_randomized: editRandomized ? 1 : 0 } : ex))
       setEditingExam(null)
     } catch (err) {
       setError(err.message)
@@ -100,6 +121,16 @@ export default function Dashboard() {
           >
             + Buat Ujian Baru
           </button>
+        </div>
+
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Cari ujian..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full sm:max-w-md bg-white/80 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm"
+          />
         </div>
 
         {error && (
@@ -146,6 +177,16 @@ export default function Dashboard() {
                   onChange={(e) => setNewTime(Number(e.target.value))}
                   className="w-full accent-blue-600"
                 />
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <input 
+                  type="checkbox" 
+                  id="newRandomized"
+                  checked={newRandomized === 1}
+                  onChange={(e) => setNewRandomized(e.target.checked ? 1 : 0)}
+                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                />
+                <label htmlFor="newRandomized" className="text-sm text-slate-700 font-medium">Acak Urutan Soal</label>
               </div>
               <div className="flex gap-3 justify-end pt-2">
                 <button
@@ -203,6 +244,16 @@ export default function Dashboard() {
                   className="w-full accent-blue-600"
                 />
               </div>
+              <div className="flex items-center gap-2 mt-2">
+                <input 
+                  type="checkbox" 
+                  id="editRandomized"
+                  checked={editRandomized === 1}
+                  onChange={(e) => setEditRandomized(e.target.checked ? 1 : 0)}
+                  className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                />
+                <label htmlFor="editRandomized" className="text-sm text-slate-700 font-medium">Acak Urutan Soal</label>
+              </div>
               <div className="flex gap-3 justify-end pt-2">
                 <button
                   type="button"
@@ -253,6 +304,14 @@ export default function Dashboard() {
                       <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-medium text-xs">
                         {exam.time_limit_minutes} menit
                       </span>
+                      {exam.is_randomized == 1 && (
+                        <>
+                          <span className="text-slate-300">•</span>
+                          <span className="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-md font-medium text-xs border border-purple-200">
+                            Soal Diacak
+                          </span>
+                        </>
+                      )}
                       <span className="text-slate-300">•</span>
                       <span className="text-slate-500 text-xs">Oleh {exam.creator}</span>
                       <span className="text-slate-300">•</span>
@@ -295,6 +354,28 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
+            >
+              Sebelumnya
+            </button>
+            <span className="text-sm text-slate-600 font-medium">
+              Halaman {page} dari {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition"
+            >
+              Selanjutnya
+            </button>
           </div>
         )}
       </div>

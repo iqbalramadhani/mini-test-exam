@@ -41,25 +41,37 @@ export default function AvailableExams() {
         navigate(`/take/${examId}?mode=tryout`)
       } else if (result.isDenied) {
         Swal.fire({
-          title: 'Jumlah Soal Latihan',
-          input: 'number',
-          inputLabel: `Maksimal ${totalQuestions} soal (kosongkan untuk semua soal)`,
-          inputPlaceholder: 'Contoh: 10',
-          inputAttributes: {
-            min: 1,
-            max: totalQuestions,
-          },
+          title: 'Pengaturan Mode Latihan',
+          html: `
+            <div class="text-left space-y-4 mt-2">
+              <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Soal Maksimal (opsional)</label>
+                <input type="number" id="practice-limit" class="swal2-input !mt-0 !w-[90%] !mx-auto" placeholder="Maks ${totalQuestions} soal" min="1" max="${totalQuestions}">
+              </div>
+              <div class="flex items-center justify-center gap-2 mt-4">
+                <input type="checkbox" id="practice-randomize" class="w-4 h-4 text-indigo-600 rounded border-slate-300">
+                <label for="practice-randomize" class="text-sm font-medium text-slate-700 cursor-pointer">Acak urutan soal</label>
+              </div>
+            </div>
+          `,
           showCancelButton: true,
-          confirmButtonText: 'Mulai',
+          confirmButtonText: 'Mulai Latihan',
           cancelButtonText: 'Batal',
+          preConfirm: () => {
+            const limit = document.getElementById('practice-limit').value;
+            const randomize = document.getElementById('practice-randomize').checked;
+            return { limit, randomize };
+          }
         }).then((res) => {
           if (res.isConfirmed) {
-            let limit = parseInt(res.value)
-            if (isNaN(limit) || limit <= 0) {
-              navigate(`/take/${examId}?mode=practice`)
-            } else {
-              navigate(`/take/${examId}?mode=practice&limit=${limit}`)
+            let limit = parseInt(res.value.limit)
+            let randomize = res.value.randomize ? 1 : 0
+            
+            let query = `mode=practice&randomize=${randomize}`
+            if (!isNaN(limit) && limit > 0) {
+              query += `&limit=${limit}`
             }
+            navigate(`/take/${examId}?${query}`)
           }
         })
       }

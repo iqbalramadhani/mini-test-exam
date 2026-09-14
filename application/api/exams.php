@@ -85,15 +85,45 @@ class ExamController
     public function index(): bool
     {
         $this->requireAuth();
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+        if ($limit < 1) $limit = 10;
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+        
+        $offset = ($page - 1) * $limit;
+        
+        $where = "";
+        $params = [];
+        
+        if ($search !== '') {
+            $where = "WHERE e.title LIKE :search";
+            $params[':search'] = "%$search%";
+        }
+
         $stmt = $this->db->prepare("
-            SELECT e.id, e.title, e.description, e.time_limit_minutes, e.is_published,
+            SELECT e.id, e.title, e.description, e.time_limit_minutes, e.is_published, e.is_randomized,
                    u.username as creator, e.created_at
             FROM exam e
             JOIN user u ON e.created_by = u.id
+            $where
             ORDER BY e.created_at DESC
+            LIMIT $limit OFFSET $offset
         ");
-        $stmt->execute();
-        $this->respond(['exams' => $stmt->fetchAll()]);
+        $stmt->execute($params);
+        $exams = $stmt->fetchAll();
+
+        $cStmt = $this->db->prepare("SELECT COUNT(*) as total FROM exam e $where");
+        $cStmt->execute($params);
+        $total = $cStmt->fetch()->total;
+
+        $this->respond([
+            'exams' => $exams,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+            'total_pages' => ceil($total / $limit)
+        ]);
     }
 
     public function show(int $id): bool
@@ -132,6 +162,7 @@ class ExamController
         $title       = trim($body['title'] ?? '');
         $description = trim($body['description'] ?? '');
         $timeLimit   = (int) ($body['time_limit_minutes'] ?? 60);
+        $isRandomized = isset($body['is_randomized']) ? (int)$body['is_randomized'] : 0;
 
         if (strlen($title) < 1) {
             $this->error('Judul ujian wajib diisi');
@@ -140,16 +171,17 @@ class ExamController
             $timeLimit = 60;
         }
 
-        $stmt = $this->db->prepare("INSERT INTO exam (title, description, time_limit_minutes, created_by) VALUES (:t, :d, :tl, :uid)");
+        $stmt = $this->db->prepare("INSERT INTO exam (title, description, time_limit_minutes, is_randomized, created_by) VALUES (:t, :d, :tl, :r, :uid)");
         $stmt->execute([
             ':t'   => $title,
             ':d'   => $description,
             ':tl'  => $timeLimit,
+            ':r'   => $isRandomized,
             ':uid' => $_SESSION['user_id'],
         ]);
         $examId = $this->db->lastInsertId();
 
-        $this->respond(['exam' => ['id' => (int)$examId, 'title' => $title, 'time_limit_minutes' => $timeLimit]], 201);
+        $this->respond(['exam' => ['id' => (int)$examId, 'title' => $title, 'time_limit_minutes' => $timeLimit, 'is_randomized' => $isRandomized]], 201);
     }
 
     public function update(int $id): bool
@@ -163,13 +195,15 @@ class ExamController
         $description = trim($body['description'] ?? '');
         $timeLimit   = (int) ($body['time_limit_minutes'] ?? 60);
         $isPublished = isset($body['is_published']) ? (int)$body['is_published'] : 0;
+        $isRandomized = isset($body['is_randomized']) ? (int)$body['is_randomized'] : 0;
 
-        $stmt = $this->db->prepare("UPDATE exam SET title = :t, description = :d, time_limit_minutes = :tl, is_published = :p WHERE id = :id");
+        $stmt = $this->db->prepare("UPDATE exam SET title = :t, description = :d, time_limit_minutes = :tl, is_published = :p, is_randomized = :r WHERE id = :id");
         $stmt->execute([
             ':t'  => $title,
             ':d'  => $description,
             ':tl' => $timeLimit,
             ':p'  => $isPublished,
+            ':r'  => $isRandomized,
             ':id' => $id,
         ]);
 
@@ -220,12 +254,16 @@ class ExamController
             $this->error('Minimal 2 pilihan jawaban');
         }
 
+        $soStmt = $this->db->prepare("SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_so FROM question WHERE exam_id = :eid");
+        $soStmt->execute([':eid' => $examId]);
+        $nextSortOrder = (int) $soStmt->fetch()->next_so;
+
         $stmt = $this->db->prepare("INSERT INTO question (exam_id, body, correct_choice_index, sort_order, question_type, explanation, keterangan, weight) VALUES (:eid, :body, :cci, :so, :qt, :exp, :ket, :weight)");
         $stmt->execute([
             ':eid'  => $examId,
             ':body' => $question['body'],
             ':cci'  => (int)($question['correct_choice_index'] ?? 0),
-            ':so'   => count($choices),
+            ':so'   => $nextSortOrder,
             ':qt'   => $question['question_type'] ?? 'choice',
             ':exp'  => $question['explanation'] ?? null,
             ':ket'  => $question['keterangan'] ?? null,
@@ -266,6 +304,10 @@ class ExamController
             $ids      = [];
             $labelMap = ['A', 'B', 'C', 'D', 'E', 'F'];
 
+            $soStmt = $this->db->prepare("SELECT COALESCE(MAX(sort_order), 0) + 1 AS next_so FROM question WHERE exam_id = :eid");
+            $soStmt->execute([':eid' => $examId]);
+            $nextSortOrder = (int) $soStmt->fetch()->next_so;
+
             $qStmt = $this->db->prepare("INSERT INTO question (exam_id, body, correct_choice_index, sort_order, question_type, explanation, keterangan, weight) VALUES (:eid, :body, :cci, :so, :qt, :exp, :ket, :weight)");
             $cStmt = $this->db->prepare("INSERT INTO choice (question_id, label, text, score) VALUES (:qid, :label, :text, :score)");
 
@@ -280,12 +322,13 @@ class ExamController
                     ':eid'  => $examId,
                     ':body' => $bodyText,
                     ':cci'  => (int)($q['correctChoiceIndex'] ?? $q['correct_choice_index'] ?? 0),
-                    ':so'   => count($choices),
+                    ':so'   => $nextSortOrder,
                     ':qt'   => $q['question_type'] ?? 'choice',
                     ':exp'  => $q['explanation'] ?? null,
                     ':ket'  => $q['keterangan'] ?? null,
                     ':weight' => (int)($q['weight'] ?? 1),
                 ]);
+                $nextSortOrder++;
                 $qid    = (int)$this->db->lastInsertId();
                 $ids[]  = $qid;
 

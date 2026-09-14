@@ -87,8 +87,9 @@ class AttemptController
             $mode = 'tryout';
         }
         $limit = isset($body['limit']) ? (int)$body['limit'] : null;
+        $practiceRandomize = isset($body['randomize']) ? (bool)$body['randomize'] : false;
 
-        $stmt = $this->db->prepare("SELECT id, title, description, time_limit_minutes FROM exam WHERE id = :id AND is_published = 1");
+        $stmt = $this->db->prepare("SELECT id, title, description, time_limit_minutes, is_randomized FROM exam WHERE id = :id AND is_published = 1");
         $stmt->execute([':id' => $examId]);
         $exam = $stmt->fetch();
         if (!$exam) {
@@ -99,9 +100,15 @@ class AttemptController
         $qStmt->execute([':eid' => $examId]);
         $questions = $qStmt->fetchAll();
 
-        if ($mode === 'practice' && $limit > 0 && $limit < count($questions)) {
+        if ($mode === 'practice') {
+            if ($practiceRandomize) {
+                shuffle($questions);
+            }
+            if ($limit > 0 && $limit < count($questions)) {
+                $questions = array_slice($questions, 0, $limit);
+            }
+        } else if (isset($exam->is_randomized) && $exam->is_randomized == 1) {
             shuffle($questions);
-            $questions = array_slice($questions, 0, $limit);
         }
 
         if (count($questions) === 0) {

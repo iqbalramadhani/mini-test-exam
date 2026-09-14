@@ -14,6 +14,7 @@ export default function TakeExam() {
   const [searchParams] = useSearchParams()
   const initialMode = searchParams.get('mode') || 'tryout'
   const practiceLimit = searchParams.get('limit')
+  const practiceRandomize = searchParams.get('randomize') === '1'
 
   const [exam, setExam] = useState(null)
   const [examMode, setExamMode] = useState('tryout')
@@ -27,7 +28,11 @@ export default function TakeExam() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
 
   useEffect(() => {
-    attemptApi.start(parseInt(id), { mode: initialMode, limit: practiceLimit ? parseInt(practiceLimit) : null })
+    attemptApi.start(parseInt(id), { 
+      mode: initialMode, 
+      limit: practiceLimit ? parseInt(practiceLimit) : null,
+      randomize: practiceRandomize
+    })
       .then((data) => {
         setExam(data.exam)
         setQuestions(data.questions)
@@ -47,7 +52,7 @@ export default function TakeExam() {
         setError(err.message)
         setLoading(false)
       })
-  }, [id, initialMode, practiceLimit])
+  }, [id, initialMode, practiceLimit, practiceRandomize])
 
 
 

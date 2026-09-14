@@ -27,7 +27,10 @@ export const authApi = {
 }
 
 export const examApi = {
-  list: () => request('/exams'),
+  list: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return request(query ? `/exams?${query}` : '/exams')
+  },
   get: (id) => request(`/exams/${id}`),
   create: (data) => request('/exams', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/exams/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
