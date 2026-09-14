@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
+import rehypeRaw from 'rehype-raw'
 import 'katex/dist/katex.min.css'
 
 export default function FormattedText({ children, className = '' }) {
@@ -10,7 +11,7 @@ export default function FormattedText({ children, className = '' }) {
     <div className={`text-inherit ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[rehypeRaw, rehypeKatex]}
         components={{
           p: ({ node, ...props }) => <p className="mb-0 inline-block" {...props} />
         }}

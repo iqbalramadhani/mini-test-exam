@@ -69,6 +69,19 @@ class ExamController
         $this->respond(['error' => $message], $status);
     }
 
+    protected function verifyExamOwnership(int $examId): void
+    {
+        $stmt = $this->db->prepare("SELECT id, created_by FROM exam WHERE id = :id");
+        $stmt->execute([':id' => $examId]);
+        $exam = $stmt->fetch();
+        if (!$exam) {
+            $this->error('Ujian tidak ditemukan', 404);
+        }
+        if (!$this->isAdmin() && $exam->created_by != $_SESSION['user_id']) {
+            $this->error('Akses ditolak: Anda bukan pembuat ujian ini', 403);
+        }
+    }
+
     public function index(): bool
     {
         $this->requireAuth();
@@ -144,12 +157,7 @@ class ExamController
         $this->requireAuth();
         $body = $this->getJsonInput();
 
-        $isAdmin = $this->isAdmin();
-        $stmt = $this->db->prepare($isAdmin ? "SELECT id FROM exam WHERE id = :id" : "SELECT id FROM exam WHERE id = :id AND created_by = :uid");
-        $stmt->execute($isAdmin ? [':id' => $id] : [':id' => $id, ':uid' => $_SESSION['user_id']]);
-        if (!$stmt->fetch()) {
-            $this->error('Ujian tidak ditemukan', 404);
-        }
+        $this->verifyExamOwnership($id);
 
         $title       = trim($body['title'] ?? '');
         $description = trim($body['description'] ?? '');
@@ -171,12 +179,7 @@ class ExamController
     public function delete(int $id): bool
     {
         $this->requireAuth();
-        $isAdmin = $this->isAdmin();
-        $stmt = $this->db->prepare($isAdmin ? "SELECT id FROM exam WHERE id = :id" : "SELECT id FROM exam WHERE id = :id AND created_by = :uid");
-        $stmt->execute($isAdmin ? [':id' => $id] : [':id' => $id, ':uid' => $_SESSION['user_id']]);
-        if (!$stmt->fetch()) {
-            $this->error('Ujian tidak ditemukan', 404);
-        }
+        $this->verifyExamOwnership($id);
         $this->db->prepare("DELETE FROM exam WHERE id = :id")->execute([':id' => $id]);
         $this->respond(['success' => true]);
     }
@@ -184,12 +187,7 @@ class ExamController
     public function listQuestions(int $examId): bool
     {
         $this->requireAuth();
-        $isAdmin = $this->isAdmin();
-        $stmt = $this->db->prepare($isAdmin ? "SELECT id FROM exam WHERE id = :id" : "SELECT id FROM exam WHERE id = :id AND created_by = :uid");
-        $stmt->execute($isAdmin ? [':id' => $examId] : [':id' => $examId, ':uid' => $_SESSION['user_id']]);
-        if (!$stmt->fetch()) {
-            $this->error('Ujian tidak ditemukan', 404);
-        }
+        $this->verifyExamOwnership($examId);
 
         $stmt = $this->db->prepare("SELECT * FROM question WHERE exam_id = :eid ORDER BY sort_order ASC");
         $stmt->execute([':eid' => $examId]);
@@ -209,11 +207,7 @@ class ExamController
         $this->requireAuth();
         $body = $this->getJsonInput();
 
-        $stmt = $this->db->prepare("SELECT id FROM exam WHERE id = :id AND created_by = :uid");
-        $stmt->execute([':id' => $examId, ':uid' => $_SESSION['user_id']]);
-        if (!$stmt->fetch()) {
-            $this->error('Ujian tidak ditemukan', 404);
-        }
+        $this->verifyExamOwnership($examId);
 
         $question = $body['question'] ?? [];
         $choices  = $body['choices'] ?? [];
@@ -258,11 +252,7 @@ class ExamController
     {
         $this->requireAuth();
 
-        $stmt = $this->db->prepare("SELECT id FROM exam WHERE id = :id AND created_by = :uid");
-        $stmt->execute([':id' => $examId, ':uid' => $_SESSION['user_id']]);
-        if (!$stmt->fetch()) {
-            $this->error('Ujian tidak ditemukan', 404);
-        }
+        $this->verifyExamOwnership($examId);
 
         $body      = $this->getJsonInput();
         $questions = $body['questions'] ?? [];
@@ -329,12 +319,7 @@ class ExamController
         $body = $this->getJsonInput();
 
         // Verify exam ownership
-        $isAdmin = $this->isAdmin();
-        $ownerStmt = $this->db->prepare($isAdmin ? "SELECT id FROM exam WHERE id = :eid" : "SELECT id FROM exam WHERE id = :eid AND created_by = :uid");
-        $ownerStmt->execute($isAdmin ? [':eid' => $examId] : [':eid' => $examId, ':uid' => $_SESSION['user_id']]);
-        if (!$ownerStmt->fetch()) {
-            $this->error('Ujian tidak ditemukan', 404);
-        }
+        $this->verifyExamOwnership($examId);
 
         $stmt = $this->db->prepare("SELECT id FROM question WHERE id = :qid AND exam_id = :eid");
         $stmt->execute([':qid' => $questionId, ':eid' => $examId]);
@@ -379,12 +364,7 @@ class ExamController
         $this->requireAuth();
 
         // Verify exam ownership
-        $isAdmin = $this->isAdmin();
-        $ownerStmt = $this->db->prepare($isAdmin ? "SELECT id FROM exam WHERE id = :eid" : "SELECT id FROM exam WHERE id = :eid AND created_by = :uid");
-        $ownerStmt->execute($isAdmin ? [':eid' => $examId] : [':eid' => $examId, ':uid' => $_SESSION['user_id']]);
-        if (!$ownerStmt->fetch()) {
-            $this->error('Ujian tidak ditemukan', 404);
-        }
+        $this->verifyExamOwnership($examId);
 
         $stmt = $this->db->prepare("SELECT id FROM question WHERE id = :qid AND exam_id = :eid");
         $stmt->execute([':qid' => $questionId, ':eid' => $examId]);

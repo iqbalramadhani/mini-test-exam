@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-"scripts": {
+  "scripts": {
     "dev": "vite",
     "build": "vite build && shx rm -rf ../public/react-app && shx cp -r dist ../public/react-app && shx cp public/favicon.svg public/icons.svg ../public/",
     "lint": "eslint .",
@@ -19,6 +19,7 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^6.30.6",
     "rehype-katex": "^7.0.1",
+    "rehype-raw": "^7.0.0",
     "remark-math": "^6.0.0",
     "sweetalert2": "^11.26.25"
   },

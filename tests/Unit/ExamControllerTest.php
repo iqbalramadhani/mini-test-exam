@@ -748,7 +748,7 @@ class ExamControllerTest extends TestCase
         $controller->setInput(['title' => 'Hacked Title']);
         $this->call(fn() => $controller->update($examId));
 
-        $this->assertEquals(404, $controller->capturedStatus);
+        $this->assertEquals(403, $controller->capturedStatus);
         $exam = $this->pdo->query("SELECT title FROM exam WHERE id = $examId")->fetch();
         $this->assertEquals('Owner Exam', $exam->title);
     }
@@ -763,7 +763,7 @@ class ExamControllerTest extends TestCase
         $controller = $this->makeTestableExamController();
         $this->call(fn() => $controller->delete($examId));
 
-        $this->assertEquals(404, $controller->capturedStatus);
+        $this->assertEquals(403, $controller->capturedStatus);
         $exam = $this->pdo->query("SELECT id FROM exam WHERE id = $examId")->fetch();
         $this->assertNotEmpty($exam);
     }
