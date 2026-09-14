@@ -106,6 +106,7 @@ class ExamControllerTest extends TestCase
                 time_limit_minutes INTEGER NOT NULL DEFAULT 60,
                 created_by INTEGER NOT NULL,
                 is_published INTEGER NOT NULL DEFAULT 0,
+                is_randomized INTEGER NOT NULL DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ");
