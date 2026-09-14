@@ -47,7 +47,7 @@ export default function TakeExam() {
         setError(err.message)
         setLoading(false)
       })
-  }, [id, initialMode])
+  }, [id, initialMode, practiceLimit])
 
 
 
