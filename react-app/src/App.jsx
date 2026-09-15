@@ -10,6 +10,7 @@ import TakeExam from './pages/TakeExam'
 import ExamResult from './pages/ExamResult'
 import Profile from './pages/Profile'
 import AdminLogin from './pages/AdminLogin'
+import Admin from './pages/Admin'
 import { ProtectedRoute } from './context/AuthContext'
 
 function AppRoutes() {
@@ -59,7 +60,12 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route path="/admin" element={user?.role === 'admin' ? <Navigate to="/dashboard" replace /> : <Navigate to="/admin-login" replace />} />
+        <Route
+          path="/admin"
+          element={
+            user?.role === 'admin' ? <Admin /> : <Navigate to="/admin-login" replace />
+          }
+        />
         <Route path="/admin-login" element={<AdminLogin />} />
       </Routes>
     </div>

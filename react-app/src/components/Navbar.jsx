@@ -53,7 +53,9 @@ export default function Navbar() {
             <Link to="/dashboard" className="text-sm text-indigo-600 font-medium hover:text-indigo-800 transition">Dashboard</Link>
           )}
           {user?.role === 'admin' && (
-            <Link to="/admin" className="text-sm text-indigo-600 font-medium hover:text-indigo-800 transition">Admin</Link>
+            <>
+              <Link to="/admin" className="text-sm text-indigo-600 font-medium hover:text-indigo-800 transition">Admin</Link>
+            </>
           )}
           <button onClick={handleReset} className="text-sm bg-slate-100/80 hover:bg-red-50 hover:text-red-600 text-slate-700 px-4 py-1.5 rounded-full transition-all duration-300">
             {user ? 'Keluar' : 'Reset'}
