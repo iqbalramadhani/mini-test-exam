@@ -66,3 +66,7 @@ export const suggestionApi = {
     return data
   },
 }
+
+export const adminApi = {
+  getLogs: () => request('/admin-logs'),
+}

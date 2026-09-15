@@ -71,7 +71,7 @@ class GoogleAuthController
 
         if ($error) {
             $err = $_GET['error_description'] ?? $error;
-            $this->redirectFrontend('admin-google/redirect', ['error' => urlencode($err)]);
+            $this->redirectFrontend('api/admin-google/redirect', ['error' => $err]);
         }
 
         if (empty($code)) {
@@ -93,7 +93,7 @@ class GoogleAuthController
         $email = strtolower(trim($user['email']));
 
         if (!empty($this->allowedEmails) && !in_array($email, $allowed, true)) {
-            $this->redirectFrontend('admin-google/redirect', ['error' => urlencode('Email tidak diizinkan untuk login admin')]);
+            $this->redirectFrontend('api/admin-google/redirect', ['error' => 'Email tidak diizinkan untuk login admin']);
         }
 
         // Set session (admin role)
@@ -108,7 +108,7 @@ class GoogleAuthController
         $_SESSION['email']    = $email;
         $_SESSION['role']     = 'admin';
 
-        $this->redirectFrontend('admin-google/redirect', ['next' => 'admin']);
+        $this->redirectFrontend('api/admin-google/redirect', ['next' => 'admin']);
     }
 
     /**
@@ -126,8 +126,7 @@ class GoogleAuthController
 <body>
 <script>
   const msg = <?= json_encode($error !== null ? ['type' => 'google_admin_login_error', 'message' => $error] : ['type' => 'google_admin_login_success']) ?>;
-  window.opener.postMessage(msg, '<?= $origin ?>');
-  window.location.href = '<?= htmlspecialchars($next, ENT_QUOTES) ?>';
+  window.opener.postMessage(msg, '*');
   window.close();
 </script>
 </body>

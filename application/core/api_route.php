@@ -173,6 +173,17 @@ if (!$handled && $parts[0] === 'suggestions') {
     }
 }
 
+// --- admin-logs routes ---
+if (!$handled && $parts[0] === 'admin-logs') {
+    require APP . 'api/admin_logs.php';
+    $logs = new AdminLogsController();
+    if ($method === 'GET') {
+        $handled = $logs->index();
+    } else {
+        apiJsonError('Method not allowed', 405);
+    }
+}
+
 if (!$handled) {
     apiJsonError('Not found', 404);
 }

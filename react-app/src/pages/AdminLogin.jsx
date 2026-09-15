@@ -13,8 +13,9 @@ export default function AdminLogin() {
     const handler = (e) => {
       if (e.origin !== window.location.origin) return
       if (e.data?.type === 'google_admin_login_success') {
-        // Close popup; AuthProvider will re-fetch /api/auth/me on next mount
+        // Close popup and redirect main window to /admin
         if (window.closePopup) window.closePopup()
+        window.location.href = '/admin'
       }
       if (e.data?.type === 'google_admin_login_error') {
         setErr(decodeURIComponent(e.data.message))
