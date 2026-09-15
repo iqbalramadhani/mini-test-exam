@@ -259,17 +259,29 @@ export default function TakeExam() {
                     let buttonClass = ''
                     let labelClass = ''
                     
+                    const isWeighted = q.choices?.every(c => parseFloat(c.score) > 0)
+                    
                     if (examMode === 'practice' && answers[q.id] !== undefined) {
-                      const isCorrectChoice = q.correct_choice_index == ci
-                      if (isCorrectChoice) {
-                        buttonClass = 'border-green-500 bg-green-50/80 text-green-800 shadow-sm ring-1 ring-green-200 z-10'
-                        labelClass = 'bg-green-600 text-white shadow-sm'
-                      } else if (isSelected) {
-                        buttonClass = 'border-red-500 bg-red-50/80 text-red-800 shadow-sm ring-1 ring-red-200'
-                        labelClass = 'bg-red-600 text-white shadow-sm'
+                      if (isWeighted) {
+                         if (isSelected) {
+                            buttonClass = 'border-indigo-500 bg-indigo-50/80 text-indigo-800 shadow-sm ring-1 ring-indigo-200 z-10'
+                            labelClass = 'bg-indigo-600 text-white shadow-sm'
+                         } else {
+                            buttonClass = 'border-slate-200 bg-white text-slate-500'
+                            labelClass = 'bg-slate-100 text-slate-500 border border-slate-200'
+                         }
                       } else {
-                        buttonClass = 'border-slate-200 bg-white text-slate-400 opacity-60 cursor-not-allowed'
-                        labelClass = 'bg-slate-100 text-slate-400 border border-slate-200'
+                        const isCorrectChoice = q.correct_choice_index == ci
+                        if (isCorrectChoice) {
+                          buttonClass = 'border-green-500 bg-green-50/80 text-green-800 shadow-sm ring-1 ring-green-200 z-10'
+                          labelClass = 'bg-green-600 text-white shadow-sm'
+                        } else if (isSelected) {
+                          buttonClass = 'border-red-500 bg-red-50/80 text-red-800 shadow-sm ring-1 ring-red-200'
+                          labelClass = 'bg-red-600 text-white shadow-sm'
+                        } else {
+                          buttonClass = 'border-slate-200 bg-white text-slate-400 opacity-60 cursor-not-allowed'
+                          labelClass = 'bg-slate-100 text-slate-400 border border-slate-200'
+                        }
                       }
                     } else {
                       buttonClass = isSelected
@@ -290,17 +302,23 @@ export default function TakeExam() {
                           {LABELS[ci]}
                         </span>
                         <span className="flex-1 text-[15px]"><FormattedText>{choice.text}</FormattedText></span>
+                        {examMode === 'practice' && answers[q.id] !== undefined && isWeighted && (
+                          <span className={`font-bold shrink-0 ${isSelected ? 'text-indigo-600' : 'text-slate-500'}`}>
+                            +{choice.score} Poin
+                          </span>
+                        )}
+
                         {isSelected && examMode !== 'practice' && (
                           <svg className="w-5 h-5 text-indigo-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         )}
-                        {examMode === 'practice' && answers[q.id] !== undefined && q.correct_choice_index == ci && (
+                        {examMode === 'practice' && answers[q.id] !== undefined && !isWeighted && q.correct_choice_index == ci && (
                           <svg className="w-5 h-5 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                           </svg>
                         )}
-                        {examMode === 'practice' && answers[q.id] !== undefined && isSelected && q.correct_choice_index != ci && (
+                        {examMode === 'practice' && answers[q.id] !== undefined && !isWeighted && isSelected && q.correct_choice_index != ci && (
                           <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                           </svg>

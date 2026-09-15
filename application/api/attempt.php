@@ -116,13 +116,17 @@ class AttemptController
         }
 
         foreach ($questions as &$q) {
-            $cStmt = $this->db->prepare("SELECT id, label, text FROM choice WHERE question_id = :qid ORDER BY id ASC");
+            $cStmt = $this->db->prepare("SELECT id, label, text, score FROM choice WHERE question_id = :qid ORDER BY id ASC");
             $cStmt->execute([':qid' => $q->id]);
             $q->choices = $cStmt->fetchAll();
             if ($mode !== 'practice') {
                 unset($q->correct_choice_index);
                 unset($q->explanation);
                 unset($q->keterangan);
+                foreach ($q->choices as &$c) {
+                    unset($c->score);
+                }
+                unset($c);
             }
         }
         unset($q);
@@ -314,10 +318,11 @@ class AttemptController
 
         $choiceTexts = [];
         foreach ($answers as $ans) {
-            $cStmt = $this->db->prepare("SELECT id, text FROM choice WHERE question_id = :qid ORDER BY id ASC");
+            $cStmt = $this->db->prepare("SELECT id, text, score FROM choice WHERE question_id = :qid ORDER BY id ASC");
             $cStmt->execute([':qid' => $ans->question_id]);
             $choices = $cStmt->fetchAll();
             $choiceTexts[$ans->question_id] = array_map(fn($c) => $c->text, $choices);
+            $ans->choices = $choices;
 
             $idx = (int)$ans->correct_choice_index;
             $ans->correct_text = $choiceTexts[$ans->question_id][$idx] ?? null;

@@ -98,18 +98,25 @@ export default function ExamResult() {
         <h2 className="font-extrabold text-slate-800 text-xl mb-6">Review Jawaban</h2>
 
         <div className="space-y-5">
-          {answers.map((ans, index) => (
+          {answers.map((ans, index) => {
+            const isWeighted = ans.choices?.every(c => parseFloat(c.score) > 0)
+            
+            return (
             <div
               key={ans.answer_id}
               className={`bg-white/80 backdrop-blur-md rounded-2xl border p-6 shadow-sm transition-all hover:shadow-md ${
-                ans.is_correct === 1
-                  ? 'border-emerald-200 shadow-emerald-100/50'
-                  : 'border-rose-200 shadow-rose-100/50'
+                isWeighted
+                  ? 'border-indigo-200 shadow-indigo-100/50'
+                  : ans.is_correct === 1
+                    ? 'border-emerald-200 shadow-emerald-100/50'
+                    : 'border-rose-200 shadow-rose-100/50'
               }`}
             >
               <div className="flex items-start gap-4 mb-4">
                 <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-extrabold shrink-0 shadow-sm ${
-                  ans.is_correct === 1 ? 'bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-800' : 'bg-gradient-to-br from-rose-100 to-rose-200 text-rose-800'
+                  isWeighted
+                    ? 'bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-800'
+                    : ans.is_correct === 1 ? 'bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-800' : 'bg-gradient-to-br from-rose-100 to-rose-200 text-rose-800'
                 }`}>
                   {index + 1}
                 </span>
@@ -117,26 +124,49 @@ export default function ExamResult() {
               </div>
 
               <div className="ml-12 space-y-2.5 text-sm">
-                <div className={`px-4 py-3 rounded-xl border ${
-                  ans.is_correct === 1 ? 'bg-emerald-50/80 border-emerald-100 text-emerald-800' : 'bg-rose-50/80 border-rose-100 text-rose-800'
-                }`}>
-                  <span className="font-bold opacity-80">Jawabanmu: </span>
-                  {ans.selected_choice_index >= 0 ? (
-                    <span className="inline-flex gap-1">
-                      {LABELS[ans.selected_choice_index]}. <FormattedText>{ans.selected_text || '—'}</FormattedText>
-                    </span>
-                  ) : (
-                    '(Tidak dijawab)'
-                  )}
-                  <span className="ml-2 font-bold">{ans.is_correct === 1 ? '✓' : '✗'}</span>
-                </div>
-                {ans.is_correct === 0 && (
-                  <div className="px-4 py-3 rounded-xl bg-emerald-50/80 border border-emerald-100 text-emerald-800">
-                    <span className="font-bold opacity-80">Kunci Jawaban: </span>
-                    <span className="inline-flex gap-1">
-                      {LABELS[ans.correct_choice_index]}. <FormattedText>{ans.correct_text || '—'}</FormattedText>
-                    </span>
+                {isWeighted ? (
+                  <div className="space-y-2">
+                    {ans.choices.map((choice, ci) => {
+                      const isSelected = ans.selected_choice_index === ci
+                      return (
+                        <div key={ci} className={`px-4 py-3 rounded-xl border flex items-center justify-between ${
+                          isSelected ? 'bg-indigo-50/80 border-indigo-200 text-indigo-900 shadow-sm' : 'bg-white border-slate-200 text-slate-600'
+                        }`}>
+                          <div className="flex gap-3">
+                            <span className={`font-bold ${isSelected ? 'text-indigo-700' : 'text-slate-500'}`}>{LABELS[ci]}.</span>
+                            <FormattedText>{choice.text}</FormattedText>
+                          </div>
+                          <span className={`font-bold shrink-0 ${isSelected ? 'text-indigo-700' : 'text-slate-500'}`}>
+                            +{choice.score} Poin
+                          </span>
+                        </div>
+                      )
+                    })}
                   </div>
+                ) : (
+                  <>
+                    <div className={`px-4 py-3 rounded-xl border ${
+                      ans.is_correct === 1 ? 'bg-emerald-50/80 border-emerald-100 text-emerald-800' : 'bg-rose-50/80 border-rose-100 text-rose-800'
+                    }`}>
+                      <span className="font-bold opacity-80">Jawabanmu: </span>
+                      {ans.selected_choice_index >= 0 ? (
+                        <span className="inline-flex gap-1">
+                          {LABELS[ans.selected_choice_index]}. <FormattedText>{ans.selected_text || '—'}</FormattedText>
+                        </span>
+                      ) : (
+                        '(Tidak dijawab)'
+                      )}
+                      <span className="ml-2 font-bold">{ans.is_correct === 1 ? '✓' : '✗'}</span>
+                    </div>
+                    {ans.is_correct === 0 && (
+                      <div className="px-4 py-3 rounded-xl bg-emerald-50/80 border border-emerald-100 text-emerald-800">
+                        <span className="font-bold opacity-80">Kunci Jawaban: </span>
+                        <span className="inline-flex gap-1">
+                          {LABELS[ans.correct_choice_index]}. <FormattedText>{ans.correct_text || '—'}</FormattedText>
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
                 {ans.explanation && (
                   <div className="mt-3 px-4 py-3 rounded-xl bg-indigo-50/50 border border-indigo-100/50 text-indigo-900 text-sm leading-relaxed">
@@ -146,7 +176,8 @@ export default function ExamResult() {
                 )}
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
 
         <div className="mt-10 text-center pb-8">
