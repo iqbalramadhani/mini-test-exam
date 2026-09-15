@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Navbar from '../components/Navbar'
-import { AuthProvider, AuthContext } from '../context/AuthContext'
+import { AuthContext } from '../context/AuthContext'
 
 vi.mock('../api', () => ({
   authApi: {
@@ -13,7 +13,7 @@ vi.mock('../api', () => ({
 
 function renderWithAuth(user = null) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AuthContext.Provider value={{ user, loading: false, login: vi.fn(), register: vi.fn(), logout: vi.fn(), isAuthenticated: !!user }}>
         <Navbar />
       </AuthContext.Provider>

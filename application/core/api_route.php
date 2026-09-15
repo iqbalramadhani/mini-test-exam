@@ -77,6 +77,25 @@ if (!$handled && $parts[0] === 'auth') {
     }
 }
 
+// --- Google OAuth admin login routes ---
+if (!$handled && $parts[0] === 'admin-google') {
+    require APP . 'api/google_auth.php';
+    $ga = new GoogleAuthController();
+    switch ($parts[1] ?? '') {
+        case 'login':
+            if ($method === 'GET') { $handled = $ga->start(); break; }
+            apiJsonError('Method not allowed', 405);
+        case 'callback':
+            if ($method === 'GET') { $handled = $ga->callback(); break; }
+            apiJsonError('Method not allowed', 405);
+        case 'redirect':
+            if ($method === 'GET') { $handled = $ga->redirectPage(); break; }
+            apiJsonError('Method not allowed', 405);
+        default:
+            apiJsonError('Not found', 404);
+    }
+}
+
 // --- exam routes ---
 if (!$handled && $parts[0] === 'exams') {
     require APP . 'api/exams.php';
@@ -138,6 +157,17 @@ if (!$handled && $parts[0] === 'migration') {
         // migration.php self-executes: instantiates controller and calls run()
         require APP . 'api/migration.php';
         $handled = true;
+    } else {
+        apiJsonError('Method not allowed', 405);
+    }
+}
+
+// --- suggestions routes ---
+if (!$handled && $parts[0] === 'suggestions') {
+    require APP . 'api/suggestions.php';
+    $suggestion = new SuggestionController();
+    if ($method === 'POST' && ($parts[1] ?? '') === 'send') {
+        $handled = $suggestion->send();
     } else {
         apiJsonError('Method not allowed', 405);
     }

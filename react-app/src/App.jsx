@@ -9,7 +9,6 @@ import AvailableExams from './pages/AvailableExams'
 import TakeExam from './pages/TakeExam'
 import ExamResult from './pages/ExamResult'
 import Profile from './pages/Profile'
-import Admin from './pages/Admin'
 import AdminLogin from './pages/AdminLogin'
 import { ProtectedRoute } from './context/AuthContext'
 

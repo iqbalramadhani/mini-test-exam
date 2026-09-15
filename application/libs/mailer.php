@@ -70,4 +70,38 @@ class Mailer
             return false;
         }
     }
+    public function sendSuggestionEmail($fromEmail, $title, $description, $fileTmpPath = null, $fileName = null)
+    {
+        try {
+            $this->mail->clearAddresses();
+            $this->mail->clearAttachments();
+            
+            $this->mail->addAddress('soal@bale.web.id', 'Admin Bale Web');
+            $this->mail->addReplyTo($fromEmail);
+
+            $this->mail->Subject = 'Saran Ujian/Fitur Baru: ' . $title;
+            
+            $body = "<h3>Saran Ujian/Fitur Baru</h3>";
+            $body .= "<p><strong>Dari:</strong> {$fromEmail}</p>";
+            $body .= "<p><strong>Judul:</strong> {$title}</p>";
+            if (!empty($description)) {
+                $body .= "<p><strong>Deskripsi:</strong><br/>" . nl2br(htmlspecialchars($description)) . "</p>";
+            }
+            
+            $this->mail->Body = $body;
+            $this->mail->AltBody = strip_tags(str_replace('<br/>', "\n", $body));
+
+            if ($fileTmpPath && $fileName) {
+                $this->mail->addAttachment($fileTmpPath, $fileName);
+            }
+
+            $this->mail->send();
+            return true;
+        } catch (Exception $e) {
+            if (class_exists('AppErrorHandler')) {
+                AppErrorHandler::getLogger()->error("Email sending failed for suggestion from {$fromEmail}. Error: {$this->mail->ErrorInfo}");
+            }
+            return false;
+        }
+    }
 }

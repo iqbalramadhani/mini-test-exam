@@ -1,23 +1,55 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { Navigate } from 'react-router-dom'
+import { authApi } from '../api'
 
 export default function AdminLogin() {
-  const { user, login } = useAuth()
-  const [id, setId] = useState('')
-  const [pw, setPw] = useState('')
-  const [showPw, setShowPw] = useState(false)
+  const { user } = useAuth()
   const [err, setErr] = useState('')
+  const [googleBusy, setGoogleBusy] = useState(false)
 
-  if (user?.role === 'admin') return <Navigate to="/exams" replace />
+  // Restore regular form if user navigates back from Google flow
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.origin !== window.location.origin) return
+      if (e.data?.type === 'google_admin_login_success') {
+        // Close popup; AuthProvider will re-fetch /api/auth/me on next mount
+        if (window.closePopup) window.closePopup()
+      }
+      if (e.data?.type === 'google_admin_login_error') {
+        setErr(decodeURIComponent(e.data.message))
+        if (window.closePopup) window.closePopup()
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
 
-  const submit = async (e) => {
-    e.preventDefault()
-    try {
-      await login(id, pw)
-      setErr('')
-    } catch {
-      setErr('Login gagal')
+  if (user?.role === 'admin') return <Navigate to="/admin" replace />
+
+
+
+  const openGoogleLogin = () => {
+    setGoogleBusy(true)
+    const width = 500, height = 600
+    const left = (window.screen.width / 2) - (width / 2)
+    const top = (window.screen.height / 2) - (height / 2)
+    const popup = window.open(
+      authApi.adminGoogleLogin(),
+      'googleAdminLogin',
+      `width=${width},height=${height},left=${left},top=${top}`
+    )
+    // Fallback: close popup after 90s if message event never fires
+    const timer = setTimeout(() => {
+      if (popup && !popup.closed) {
+        popup.close()
+        setGoogleBusy(false)
+      }
+    }, 90000)
+    window.closePopup = () => {
+      clearTimeout(timer)
+      setGoogleBusy(false)
+      delete window.closePopup
     }
   }
 
@@ -28,27 +60,16 @@ export default function AdminLogin() {
           <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Admin</h1>
           <p className="text-slate-500 text-sm mt-1">Masuk ke panel admin</p>
         </div>
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <label htmlFor="ad-id" className="block text-xs font-semibold text-slate-600 mb-1">Username / Email</label>
-            <input id="ad-id" className="w-full bg-white/70 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition" placeholder="admin" value={id} onChange={e => setId(e.target.value)} />
-          </div>
-          <div>
-            <label htmlFor="ad-pw" className="block text-xs font-semibold text-slate-600 mb-1">Password</label>
-            <div className="relative">
-              <input id="ad-pw" type={showPw ? "text" : "password"} className="w-full bg-white/70 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition pr-20" placeholder="••••••••" value={pw} onChange={e => setPw(e.target.value)} />
-              <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-indigo-600 hover:text-indigo-800 rounded-lg hover:bg-white/60 transition" aria-label="Toggle password">
-                {showPw ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.06 10.06 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 9.9a3 3 0 0 1 4.24 4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                )}
-              </button>
-            </div>
-          </div>
-          {err && <p className="text-red-500 text-xs">{err}</p>}
-          <button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl py-2.5 font-bold shadow-lg hover:shadow-xl transition-all">Masuk</button>
-        </form>
+        {err && <p className="text-red-500 text-sm text-center mb-4">{err}</p>}
+        <button
+          type="button"
+          onClick={openGoogleLogin}
+          disabled={googleBusy}
+          className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl py-2.5 font-semibold transition-all disabled:opacity-50"
+        >
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.9 33.6 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6 29.2 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.2-2.7-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.3 15.5 18.8 12 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7C34 6 29.2 4 24 4 16.1 4 9.6 8.6 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c4.9 0 9.4-1.8 12.8-4.8l-6.2-5.4C29.2 35.2 26.7 36 24 36c-5.3 0-9.8-3.4-11.4-8.2l-6.5 5C9.5 39.3 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.4C38.9 39.5 44 34 44 24c0-1.3-.2-2.7-.4-3.9z"/></svg>
+          {googleBusy ? 'Memproses...' : 'Login dengan Google'}
+        </button>
       </div>
     </div>
   )

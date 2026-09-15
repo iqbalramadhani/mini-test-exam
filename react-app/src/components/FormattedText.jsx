@@ -13,7 +13,7 @@ export default function FormattedText({ children, className = '' }) {
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeRaw, rehypeKatex]}
         components={{
-          p: ({ node, ...props }) => <p className="mb-0 inline-block" {...props} />
+          p: ({ node: _node, ...props }) => <p className="mb-0 inline-block" {...props} />
         }}
       >
         {children}

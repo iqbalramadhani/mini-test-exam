@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import Swal from 'sweetalert2'
-import { attemptApi, examApi } from '../api'
+import { attemptApi, examApi, suggestionApi } from '../api'
 import { useAuth } from '../context/AuthContext'
 
 export default function AvailableExams() {
@@ -10,14 +10,33 @@ export default function AvailableExams() {
   const [exams, setExams] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState('available')
+  const [showSuggestionModal, setShowSuggestionModal] = useState(false)
+  const [suggestionSending, setSuggestionSending] = useState(false)
+
+  const handleSuggestionSubmit = async (e) => {
+    e.preventDefault()
+    const form = e.target
+    const formData = new FormData(form)
+    
+    setSuggestionSending(true)
+    try {
+      const res = await suggestionApi.send(formData)
+      Swal.fire('Berhasil', res.message || 'Saran berhasil dikirim', 'success')
+      setShowSuggestionModal(false)
+      form.reset()
+    } catch (err) {
+      Swal.fire('Gagal', err.message, 'error')
+    } finally {
+      setSuggestionSending(false)
+    }
+  }
 
   useEffect(() => {
     Promise.all([
       attemptApi.listPublished(),
       user ? examApi.list() : Promise.resolve({ exams: [] }),
     ])
-      .then(([pubData, dashData]) => {
+      .then(([pubData, _dashData]) => {
         setExams(pubData.exams || [])
       })
       .catch((err) => setError(err.message))
@@ -155,6 +174,65 @@ export default function AvailableExams() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        <div className="mt-12 bg-indigo-50 border border-indigo-100 rounded-2xl p-6 text-center shadow-sm">
+          <h3 className="text-lg font-bold text-indigo-900 mb-4">Punya Saran Soal atau Fitur Baru?</h3>
+
+          <button
+            onClick={() => setShowSuggestionModal(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-md hover:shadow-lg inline-flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Kirim Saran
+          </button>
+        </div>
+
+        {showSuggestionModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h3 className="text-lg font-bold text-slate-800">Kirim Saran</h3>
+                <button
+                  onClick={() => setShowSuggestionModal(false)}
+                  className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-6 overflow-y-auto">
+                <form onSubmit={handleSuggestionSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Email Anda <span className="text-red-500">*</span></label>
+                    <input type="email" name="email" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="nama@email.com" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Judul Ujian / Fitur <span className="text-red-500">*</span></label>
+                    <input type="text" name="title" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="Misal: Soal Tryout Matematika SMA" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Deskripsi <span className="text-slate-400 font-normal">(Opsional)</span></label>
+                    <textarea name="description" rows="3" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" placeholder="Jelaskan secara singkat..."></textarea>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Lampiran File <span className="text-slate-400 font-normal">(Opsional)</span></label>
+                    <input type="file" name="attachment" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                    <p className="text-xs text-slate-500 mt-1">Maks. 5MB. Bisa berupa dokumen (PDF/Word/Excel) atau gambar.</p>
+                  </div>
+                  <div className="pt-4 flex justify-end gap-3">
+                    <button type="button" onClick={() => setShowSuggestionModal(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
+                    <button type="submit" disabled={suggestionSending} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium shadow-md transition-colors disabled:opacity-70 disabled:cursor-not-allowed">
+                      {suggestionSending ? 'Mengirim...' : 'Kirim'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
         )}
       </div>

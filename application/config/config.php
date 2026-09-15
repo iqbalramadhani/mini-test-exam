@@ -82,3 +82,8 @@ if (!defined('SMTP_USER')) define('SMTP_USER', getenv('SMTP_USER') ?: '');
 if (!defined('SMTP_PASS')) define('SMTP_PASS', getenv('SMTP_PASS') ?: '');
 if (!defined('SMTP_FROM_EMAIL')) define('SMTP_FROM_EMAIL', getenv('SMTP_FROM_EMAIL') ?: 'noreply@localhost');
 if (!defined('SMTP_FROM_NAME')) define('SMTP_FROM_NAME', getenv('SMTP_FROM_NAME') ?: 'System');
+
+// Google OAuth
+if (!defined('GOOGLE_CLIENT_ID'))   define('GOOGLE_CLIENT_ID',   getenv('GOOGLE_CLIENT_ID') ?: '');
+if (!defined('GOOGLE_CLIENT_SECRET')) define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: '');
+if (!defined('ADMIN_ALLOWED_EMAILS')) define('ADMIN_ALLOWED_EMAILS', getenv('ADMIN_ALLOWED_EMAILS') ?: '');

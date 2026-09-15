@@ -20,6 +20,7 @@ export const authApi = {
   register: (data) => request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   verifyEmail: (token) => request(`/auth/verify?token=${token}`),
   login: (data) => request('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+  adminGoogleLogin: () => `/api/admin-google/login`,
   me: () => request('/auth/me'),
   logout: () => request('/auth/logout', { method: 'POST' }),
   updateProfile: (data) => request('/auth/update-profile', { method: 'POST', body: JSON.stringify(data) }),
@@ -50,4 +51,18 @@ export const attemptApi = {
     body: JSON.stringify({ answers }),
   }),
   getResult: (attemptId) => request(`/attempts/${attemptId}`),
+}
+
+export const suggestionApi = {
+  send: async (formData) => {
+    // Cannot use `request` helper directly because we don't want to JSON stringify 
+    // or set Content-Type to application/json (browser handles multipart/form-data with boundary)
+    const res = await fetch('/api/suggestions/send', {
+      method: 'POST',
+      body: formData,
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to send suggestion')
+    return data
+  },
 }
